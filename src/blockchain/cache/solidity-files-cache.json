@@ -1,0 +1,113 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\cedri\\Documents\\GitHub\\Sellio\\backend\\blockchain\\contracts\\ProductRegistry.sol": {
+      "lastModificationDate": 1759940105335,
+      "contentHash": "4805b2d22ade3f02dd4dafcf332d1ec8",
+      "sourceName": "contracts/ProductRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "ProductRegistry"
+      ]
+    },
+    "C:\\Users\\cedri\\Documents\\GitHub\\Sellio\\backend\\blockchain\\contracts\\ReceiptBook.sol": {
+      "lastModificationDate": 1760103765582,
+      "contentHash": "19712c4697e7a590f07152e3941549cc",
+      "sourceName": "contracts/ReceiptBook.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "ReceiptBook"
+      ]
+    },
+    "C:\\Users\\cedri\\Documents\\GitHub\\Sellio\\backend\\blockchain\\contracts\\ReviewAndRating.sol": {
+      "lastModificationDate": 1760103803870,
+      "contentHash": "7c29e910ce1e220291ffb894ad990900",
+      "sourceName": "contracts/ReviewAndRating.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "ReviewAndRating"
+      ]
+    }
+  }
+}
