@@ -1,5 +1,9 @@
 {
+<<<<<<< Updated upstream
   "id": "43eba32a-aa7e-47e9-9897-2b2127d8ef0a",
+=======
+  "id": "176c09d7-689f-4815-b926-a46214819217",
+>>>>>>> Stashed changes
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -835,6 +839,127 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+<<<<<<< Updated upstream
+=======
+    "public.device_tokens": {
+      "name": "device_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expo_push_token": {
+          "name": "expo_push_token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_name": {
+          "name": "device_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "device_type": {
+          "name": "device_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "device_tokens_user_id_idx": {
+          "name": "device_tokens_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "device_tokens_token_idx": {
+          "name": "device_tokens_token_idx",
+          "columns": [
+            {
+              "expression": "expo_push_token",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "device_tokens_user_id_users_id_fk": {
+          "name": "device_tokens_user_id_users_id_fk",
+          "tableFrom": "device_tokens",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "device_tokens_expo_push_token_unique": {
+          "name": "device_tokens_expo_push_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "expo_push_token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+>>>>>>> Stashed changes
     "public.location_sharing_sessions": {
       "name": "location_sharing_sessions",
       "schema": "",
@@ -1006,6 +1131,7 @@
           "primaryKey": false,
           "notNull": false
         },
+<<<<<<< Updated upstream
         "accuracy": {
           "name": "accuracy",
           "type": "varchar(20)",
@@ -1024,6 +1150,8 @@
           "primaryKey": false,
           "notNull": false
         },
+=======
+>>>>>>> Stashed changes
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -1164,13 +1292,21 @@
         },
         "read_at": {
           "name": "read_at",
+<<<<<<< Updated upstream
           "type": "timestamp",
+=======
+          "type": "timestamp with time zone",
+>>>>>>> Stashed changes
           "primaryKey": false,
           "notNull": false
         },
         "created_at": {
           "name": "created_at",
+<<<<<<< Updated upstream
           "type": "timestamp",
+=======
+          "type": "timestamp with time zone",
+>>>>>>> Stashed changes
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -1259,6 +1395,15 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< Updated upstream
+=======
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+>>>>>>> Stashed changes
         "title": {
           "name": "title",
           "type": "varchar(200)",
@@ -1291,6 +1436,21 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< Updated upstream
+=======
+        "route_name": {
+          "name": "route_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "route_params": {
+          "name": "route_params",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+>>>>>>> Stashed changes
         "data": {
           "name": "data",
           "type": "jsonb",
@@ -1632,6 +1792,16 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< Updated upstream
+=======
+        "image_type": {
+          "name": "image_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'product'"
+        },
+>>>>>>> Stashed changes
         "order": {
           "name": "order",
           "type": "varchar(10)",
@@ -1668,6 +1838,24 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+<<<<<<< Updated upstream
+=======
+        },
+        "product_images_image_type_idx": {
+          "name": "product_images_image_type_idx",
+          "columns": [
+            {
+              "expression": "image_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+>>>>>>> Stashed changes
         }
       },
       "foreignKeys": {
@@ -2075,6 +2263,139 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+<<<<<<< Updated upstream
+=======
+    "public.reports": {
+      "name": "reports",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "reporter_id": {
+          "name": "reporter_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reported_user_id": {
+          "name": "reported_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "report_type": {
+          "name": "report_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "details": {
+          "name": "details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reports_reporter_id_users_id_fk": {
+          "name": "reports_reporter_id_users_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reporter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reports_reported_user_id_users_id_fk": {
+          "name": "reports_reported_user_id_users_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reported_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reports_product_id_products_id_fk": {
+          "name": "reports_product_id_products_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reports_transaction_id_transactions_id_fk": {
+          "name": "reports_transaction_id_transactions_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "transactions",
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+>>>>>>> Stashed changes
     "public.review_images": {
       "name": "review_images",
       "schema": "",
@@ -2232,6 +2553,7 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< Updated upstream
         "response": {
           "name": "response",
           "type": "text",
@@ -2244,6 +2566,8 @@
           "primaryKey": false,
           "notNull": false
         },
+=======
+>>>>>>> Stashed changes
         "is_verified_transaction": {
           "name": "is_verified_transaction",
           "type": "boolean",
@@ -2730,6 +3054,15 @@
           "primaryKey": false,
           "notNull": false
         },
+<<<<<<< Updated upstream
+=======
+        "meetup_proposed_by": {
+          "name": "meetup_proposed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+>>>>>>> Stashed changes
         "started_at": {
           "name": "started_at",
           "type": "timestamp",
@@ -3019,6 +3352,22 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
+<<<<<<< Updated upstream
+=======
+        "transactions_meetup_proposed_by_users_id_fk": {
+          "name": "transactions_meetup_proposed_by_users_id_fk",
+          "tableFrom": "transactions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "meetup_proposed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+>>>>>>> Stashed changes
         "transactions_cancelled_by_users_id_fk": {
           "name": "transactions_cancelled_by_users_id_fk",
           "tableFrom": "transactions",
@@ -3056,6 +3405,15 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< Updated upstream
+=======
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+>>>>>>> Stashed changes
         "password_hash": {
           "name": "password_hash",
           "type": "varchar(255)",
@@ -3106,6 +3464,15 @@
           "primaryKey": false,
           "notNull": false
         },
+<<<<<<< Updated upstream
+=======
+        "business_documents": {
+          "name": "business_documents",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+>>>>>>> Stashed changes
         "identity_verification_status": {
           "name": "identity_verification_status",
           "type": "varchar(50)",
@@ -3139,12 +3506,43 @@
           "primaryKey": false,
           "notNull": false
         },
+<<<<<<< Updated upstream
+=======
+        "suspension_expires_at": {
+          "name": "suspension_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+>>>>>>> Stashed changes
         "suspension_reason": {
           "name": "suspension_reason",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+<<<<<<< Updated upstream
+=======
+        "is_banned": {
+          "name": "is_banned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "banned_at": {
+          "name": "banned_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ban_reason": {
+          "name": "ban_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+>>>>>>> Stashed changes
         "last_login_at": {
           "name": "last_login_at",
           "type": "timestamp",
