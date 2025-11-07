@@ -40,4 +40,7 @@ export const uploadMiddleware = multer({
     fileFilter,
   });
 
-export const uploadMultiple = uploadMiddleware.array('images', 8);
+export const uploadMultiple = uploadMiddleware.fields([
+  { name: 'images', maxCount: 10 },
+  { name: 'maintenanceImages', maxCount: 10 },
+]);

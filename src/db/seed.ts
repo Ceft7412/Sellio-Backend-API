@@ -554,6 +554,16 @@ async function seedCategoryAttributes() {
               isRequired: false,
               sortOrder: 12,
             },
+            {
+              categoryId: vehicles.id,
+              subcategoryId: cars.id,
+              attributeKey: 'maintenance_checklist',
+              label: 'Maintenance Checklist',
+              type: 'file_upload' as const,
+              isRequired: false,
+              helpText: 'Upload photos of maintenance records, service history, or inspection reports',
+              sortOrder: 13,
+            },
           ]
         : []),
 
@@ -643,6 +653,16 @@ async function seedCategoryAttributes() {
                 'Other',
               ],
               sortOrder: 6,
+            },
+            {
+              categoryId: vehicles.id,
+              subcategoryId: motorcycles.id,
+              attributeKey: 'maintenance_checklist',
+              label: 'Maintenance Checklist',
+              type: 'file_upload' as const,
+              isRequired: false,
+              helpText: 'Upload photos of maintenance records, service history, or inspection reports',
+              sortOrder: 7,
             },
           ]
         : []),

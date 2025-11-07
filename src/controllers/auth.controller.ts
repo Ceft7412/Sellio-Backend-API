@@ -61,8 +61,13 @@ export const register = async (req: Request, res: Response) => {
       id: newUser.id,
       email: newUser.email,
       displayName: newUser.displayName,
+      avatarUrl: newUser.avatarUrl,
       identityVerified: newUser.identityVerificationStatus === "verified",
       emailVerified: newUser.emailVerified,
+      phoneNumber: newUser.phoneNumber,
+      bio: newUser.bio,
+      businessDocuments: newUser.businessDocuments,
+      createdAt: newUser.createdAt,
     },
   });
 };
@@ -124,6 +129,10 @@ export const login = async (req: Request, res: Response) => {
       avatarUrl: user.avatarUrl,
       emailVerified: user.emailVerified,
       identityVerified: user.identityVerificationStatus === "verified",
+      phoneNumber: user.phoneNumber,
+      bio: user.bio,
+      businessDocuments: user.businessDocuments,
+      createdAt: user.createdAt,
     },
   });
 };
@@ -163,10 +172,12 @@ export const getProfile = async (req: Request, res: Response) => {
       avatarUrl: user.avatarUrl,
       phoneNumber: user.phoneNumber,
       phoneVerified: user.phoneVerified,
+      bio: user.bio,
       emailVerified: user.emailVerified,
       identityVerified: user.identityVerificationStatus === "verified",
       identityVerificationStatus: user.identityVerificationStatus,
       identityVerifiedAt: user.identityVerifiedAt,
+      businessDocuments: user.businessDocuments,
       isActive: user.isActive,
       createdAt: user.createdAt,
       socialAccounts,
@@ -322,6 +333,10 @@ export const googleAuth = async (req: Request, res: Response) => {
         avatarUrl: user.avatarUrl,
         emailVerified: user.emailVerified,
         identityVerified: user.identityVerificationStatus === "verified",
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        businessDocuments: user.businessDocuments,
+        createdAt: user.createdAt,
       },
     });
   } catch (error: any) {

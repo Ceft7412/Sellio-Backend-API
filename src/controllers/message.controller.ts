@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
 import { AppError } from "../middleware/error.middleware";
-import { conversationsTable, offersTable, usersTable, transactions } from "../db/schema";
+import {
+  conversationsTable,
+  offersTable,
+  usersTable,
+  transactions,
+  bidsTable,
+  productsTable,
+} from "../db/schema";
 import { db } from "../db/connection";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { desc, eq, inArray, or } from "drizzle-orm";
@@ -8,7 +15,17 @@ import { desc, eq, inArray, or } from "drizzle-orm";
 import { messagesTable } from "../db/schema";
 import { and } from "drizzle-orm";
 import { io } from "../index";
-import { uploadToGCS, generateUniqueFileName } from "../services/storage.service";
+import {
+  uploadToGCS,
+  generateUniqueFileName,
+} from "../services/storage.service";
+import {
+  notifyNewMessage,
+  notifyBuyRequest,
+  notifyProductInquiry,
+  notifyNewOffer,
+} from "./notification.controller";
+import { sendMessage as sendSMS } from "./sms.controller";
 
 export const createNormalConversation = async (
   req: AuthRequest,
@@ -75,6 +92,36 @@ export const createNormalConversation = async (
 
     if (!newConversation) {
       throw new AppError("Conversation not created", 400);
+    }
+
+    // Send notification to seller if this is a product conversation
+    if (productId) {
+      // Get inquirer info
+      const [inquirer] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, userId))
+        .limit(1);
+
+      // Get product info
+      const [product] = await db
+        .select()
+        .from(productsTable)
+        .where(eq(productsTable.id, productId))
+        .limit(1);
+
+      if (inquirer && product) {
+        notifyProductInquiry({
+          userId: participant2Id,
+          inquirerName: inquirer.displayName || "Someone",
+          inquirerAvatar: inquirer.avatarUrl || "",
+          productId,
+          productTitle: product.title,
+          conversationId: newConversation.id,
+        }).catch((err) =>
+          console.error("Failed to send product inquiry notification:", err)
+        );
+      }
     }
 
     res.status(201).json({
@@ -195,6 +242,58 @@ export const getConversation = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    // Get buy details if this conversation has a buy
+    let buyDetails = null;
+    if (conversation.buyId) {
+      const { buysTable } = await import("../db/schema");
+
+      const [buy] = await db
+        .select({
+          id: buysTable.id,
+          purchasePrice: buysTable.purchasePrice,
+          status: buysTable.status,
+          buyerId: buysTable.buyerId,
+          sellerId: buysTable.sellerId,
+        })
+        .from(buysTable)
+        .where(eq(buysTable.id, conversation.buyId));
+
+      if (buy) {
+        buyDetails = {
+          id: buy.id,
+          amount: buy.purchasePrice,
+          status: buy.status,
+          buyerId: buy.buyerId,
+          sellerId: buy.sellerId,
+        };
+      }
+    }
+
+    // Get bid details if this conversation has a bid
+    let bidDetails = null;
+    if (conversation.bidId) {
+      const [bid] = await db
+        .select({
+          id: bidsTable.id,
+          bidAmount: bidsTable.bidAmount,
+          status: bidsTable.status,
+          bidderId: bidsTable.bidderId,
+          productId: bidsTable.productId,
+        })
+        .from(bidsTable)
+        .where(eq(bidsTable.id, conversation.bidId));
+
+      if (bid) {
+        bidDetails = {
+          id: bid.id,
+          bidAmount: bid.bidAmount,
+          status: bid.status,
+          bidderId: bid.bidderId,
+          productId: bid.productId,
+        };
+      }
+    }
+
     // Get transaction details if this conversation has a transaction
     let transactionDetails = null;
     if (conversation.transactionId) {
@@ -244,6 +343,8 @@ export const getConversation = async (req: AuthRequest, res: Response) => {
           : null,
         product: productInfo,
         offer: offerDetails,
+        buy: buyDetails,
+        bid: bidDetails,
         transaction: transactionDetails,
       },
     });
@@ -266,6 +367,12 @@ export const createNegotiableConversation = async (
     if (!participant2Id) throw new AppError("participant2Id is required", 400);
     if (!productId) throw new AppError("productId is required", 400);
     if (!offerPrice) throw new AppError("offerPrice is required", 400);
+
+    // Try getting the product
+    const [product] = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, productId));
 
     // Check if conversation already exists
     const existingOfferConversation = await db
@@ -406,6 +513,45 @@ export const createNegotiableConversation = async (
           conversationId: conversation.id,
           message: newMessage,
         });
+
+        // Send notification to seller about new offer
+        const [buyer] = await db
+          .select()
+          .from(usersTable)
+          .where(eq(usersTable.id, userId))
+          .limit(1);
+
+        if (buyer) {
+          notifyNewOffer({
+            userId: participant2Id,
+            buyerName: buyer.displayName || "Someone",
+            buyerAvatar: buyer.avatarUrl || "",
+            productId,
+            productTitle: product.title,
+            offerAmount: offerPrice,
+          }).catch((err) =>
+            console.error("Failed to send new offer notification:", err)
+          );
+
+          // Send SMS to seller if they have a phone number
+          const [seller] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.id, participant2Id))
+            .limit(1);
+
+          if (seller && seller.phoneNumber) {
+            const smsMessage = `New offer received! ${
+              buyer.displayName || "Someone"
+            } made an offer of ₱${parseFloat(
+              offerPrice
+            ).toLocaleString()} for "${product.title}".`;
+
+            sendSMS(smsMessage, seller.phoneNumber).catch((err) =>
+              console.error(`Failed to send SMS to seller ${seller.id}:`, err)
+            );
+          }
+        }
       }
     }
 
@@ -433,6 +579,24 @@ export const createBuyConversation = async (
     if (!productId) throw new AppError("productId is required", 400);
     if (!productTitle) throw new AppError("productTitle is required", 400);
 
+    // Get product price
+    const { productsTable, buysTable } = await import("../db/schema");
+    const [product] = await db
+      .select({
+        price: productsTable.price,
+        status: productsTable.status,
+      })
+      .from(productsTable)
+      .where(eq(productsTable.id, productId));
+
+    if (!product) {
+      throw new AppError("Product not found", 404);
+    }
+
+    if (product.status !== "active") {
+      throw new AppError("Product is not available", 400);
+    }
+
     // Check if conversation already exists
     const existingConversation = await db
       .select()
@@ -447,9 +611,20 @@ export const createBuyConversation = async (
       .limit(1);
 
     let conversation;
+    let buy;
 
     if (existingConversation.length > 0) {
       conversation = existingConversation[0];
+
+      // Check if buy already exists for this conversation
+      if (conversation.buyId) {
+        const [existingBuy] = await db
+          .select()
+          .from(buysTable)
+          .where(eq(buysTable.id, conversation.buyId));
+
+        buy = existingBuy;
+      }
     } else {
       // Check reverse
       const existingConversationReverse = await db
@@ -466,19 +641,58 @@ export const createBuyConversation = async (
 
       if (existingConversationReverse.length > 0) {
         conversation = existingConversationReverse[0];
-      } else {
-        // Create new conversation
-        const [newConversation] = await db
-          .insert(conversationsTable)
-          .values({
-            participant1Id: userId,
-            participant2Id: participant2Id,
-            productId: productId,
-          })
-          .returning();
 
-        conversation = newConversation;
+        // Check if buy already exists for this conversation
+        if (conversation.buyId) {
+          const [existingBuy] = await db
+            .select()
+            .from(buysTable)
+            .where(eq(buysTable.id, conversation.buyId));
+
+          buy = existingBuy;
+        }
       }
+    }
+
+    // Create buy record if it doesn't exist
+    if (!buy) {
+      const [newBuy] = await db
+        .insert(buysTable)
+        .values({
+          productId: productId,
+          buyerId: userId,
+          sellerId: participant2Id,
+          purchasePrice: product.price,
+          originalPrice: product.price,
+          status: "pending",
+        })
+        .returning();
+
+      buy = newBuy;
+    }
+
+    // Create or update conversation
+    if (!conversation) {
+      const [newConversation] = await db
+        .insert(conversationsTable)
+        .values({
+          participant1Id: userId,
+          participant2Id: participant2Id,
+          productId: productId,
+          buyId: buy.id,
+        })
+        .returning();
+
+      conversation = newConversation;
+    } else if (!conversation.buyId) {
+      // Update conversation with buyId if it doesn't have one
+      const [updatedConversation] = await db
+        .update(conversationsTable)
+        .set({ buyId: buy.id })
+        .where(eq(conversationsTable.id, conversation.id))
+        .returning();
+
+      conversation = updatedConversation;
     }
 
     // Create automatic message from buyer
@@ -500,6 +714,42 @@ export const createBuyConversation = async (
       message: newMessage,
     });
 
+    // Send notification to seller about buy request
+    const [buyer] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    if (buyer) {
+      notifyBuyRequest({
+        userId: participant2Id,
+        buyerName: buyer.displayName || "Someone",
+        buyerAvatar: buyer.avatarUrl || "",
+        productId,
+        productTitle,
+      }).catch((err) =>
+        console.error("Failed to send buy request notification:", err)
+      );
+
+      // Send SMS to seller if they have a phone number
+      const [seller] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, participant2Id))
+        .limit(1);
+
+      if (seller && seller.phoneNumber) {
+        const smsMessage = `New buy request! ${
+          buyer.displayName || "Someone"
+        } wants to buy "${productTitle}".`;
+
+        sendSMS(smsMessage, seller.phoneNumber).catch((err) =>
+          console.error(`Failed to send SMS to seller ${seller.id}:`, err)
+        );
+      }
+    }
+
     res.status(201).json({
       message: "Buy conversation created successfully",
       conversation,
@@ -514,13 +764,20 @@ export const createBuyConversation = async (
 export const sendMessage = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { conversationId, content, messageType = "text", imageUrl } = req.body;
+    const {
+      conversationId,
+      content,
+      messageType = "text",
+      imageUrl,
+    } = req.body;
 
     if (!userId) throw new AppError("User not authenticated", 401);
     if (!conversationId) throw new AppError("Conversation ID is required", 400);
     // Allow empty content for image messages
-    if (messageType !== "image" && !content) throw new AppError("Message content is required", 400);
-    if (messageType === "image" && !imageUrl) throw new AppError("Image URL is required for image messages", 400);
+    if (messageType !== "image" && !content)
+      throw new AppError("Message content is required", 400);
+    if (messageType === "image" && !imageUrl)
+      throw new AppError("Image URL is required for image messages", 400);
 
     // Verify user is part of this conversation
     const [conversation] = await db
@@ -568,6 +825,37 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       conversationId,
       message: newMessage,
     });
+
+    // Send notification to recipient
+    // Get sender info
+    const [sender] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    // Get product info if this is a product conversation
+    let productId = conversation.productId;
+
+    if (sender) {
+      const messagePreview =
+        messageType === "image"
+          ? "Sent an image"
+          : content.length > 50
+          ? content.substring(0, 50) + "..."
+          : content;
+
+      notifyNewMessage({
+        userId: recipientId,
+        senderName: sender.displayName || "Someone",
+        senderAvatar: sender.avatarUrl || "",
+        productId: productId || "",
+        conversationId,
+        messagePreview,
+      }).catch((err) =>
+        console.error("Failed to send message notification:", err)
+      );
+    }
 
     res.status(201).json({
       message: "Message sent successfully",
@@ -956,9 +1244,17 @@ export const uploadChatImage = async (req: AuthRequest, res: Response) => {
     const file = req.file;
 
     // Validate file type
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/webp",
+    ];
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new AppError("Invalid file type. Only JPEG, PNG, and WebP are allowed", 400);
+      throw new AppError(
+        "Invalid file type. Only JPEG, PNG, and WebP are allowed",
+        400
+      );
     }
 
     // Validate file size (5MB max)

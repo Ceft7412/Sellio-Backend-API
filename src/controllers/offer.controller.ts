@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import { db } from "../db/connection";
-import { offersTable, productsTable, messagesTable, conversationsTable, transactions } from "../db/schema";
+import { offersTable, productsTable, messagesTable, conversationsTable, transactions, usersTable, productImagesTable } from "../db/schema";
 import { eq, and, or } from "drizzle-orm";
 import { AppError } from "../middleware/error.middleware";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { io } from "../index";
+import { notifyNewOffer, notifyOfferAccepted, notifyOfferRejected } from "./notification.controller";
 
 // Create an offer
 export const createOffer = async (req: AuthRequest, res: Response) => {
@@ -55,6 +56,25 @@ export const createOffer = async (req: AuthRequest, res: Response) => {
       status: "pending",
     })
     .returning();
+
+  // Get buyer info for notification
+  const [buyer] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  // Notify seller about new offer
+  if (buyer) {
+    notifyNewOffer({
+      userId: product.sellerId,
+      buyerName: buyer.displayName || "Anonymous",
+      buyerAvatar: buyer.avatarUrl || "",
+      productId: productId,
+      productTitle: product.title,
+      offerAmount: offerAmount,
+    }).catch((err) => console.error("Failed to send new offer notification:", err));
+  }
 
   res.status(201).json({
     message: "Offer created successfully",
@@ -231,6 +251,25 @@ export const acceptOffer = async (req: AuthRequest, res: Response) => {
     });
   }
 
+  // Get product image for notification
+  const [productImage] = await db
+    .select()
+    .from(productImagesTable)
+    .where(and(
+      eq(productImagesTable.productId, offer.productId),
+      eq(productImagesTable.isPrimary, true)
+    ))
+    .limit(1);
+
+  // Notify buyer that offer was accepted
+  notifyOfferAccepted({
+    userId: offer.buyerId,
+    productId: offer.productId,
+    productTitle: product.title,
+    productImage: productImage?.imageUrl || "",
+    offerAmount: offer.offerAmount,
+  }).catch((err) => console.error("Failed to send offer accepted notification:", err));
+
   res.json({
     message: "Offer accepted successfully",
     offer: updatedOffer,
@@ -311,6 +350,34 @@ export const rejectOffer = async (req: AuthRequest, res: Response) => {
       conversationId: conversation.id,
       message: newMessage,
     });
+  }
+
+  // Get product info for notification
+  const [product] = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.id, offer.productId))
+    .limit(1);
+
+  // Get product image for notification
+  const [productImage] = await db
+    .select()
+    .from(productImagesTable)
+    .where(and(
+      eq(productImagesTable.productId, offer.productId),
+      eq(productImagesTable.isPrimary, true)
+    ))
+    .limit(1);
+
+  // Notify buyer that offer was rejected
+  if (product) {
+    notifyOfferRejected({
+      userId: offer.buyerId,
+      productId: offer.productId,
+      productTitle: product.title,
+      productImage: productImage?.imageUrl || "",
+      offerAmount: offer.offerAmount,
+    }).catch((err) => console.error("Failed to send offer rejected notification:", err));
   }
 
   res.json({

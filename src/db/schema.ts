@@ -20,6 +20,7 @@ export const usersTable = pgTable(
 
     // Email/Password Authentication
     email: varchar("email", { length: 255 }).unique().notNull(),
+    bio: text("bio"),
     passwordHash: varchar("password_hash", { length: 255 }), // Nullable for social auth only users
     emailVerified: boolean("email_verified").default(false).notNull(),
     emailVerifiedAt: timestamp("email_verified_at"),
@@ -28,6 +29,9 @@ export const usersTable = pgTable(
     phoneNumber: varchar("phone_number", { length: 20 }),
     phoneVerified: boolean("phone_verified").default(false).notNull(),
     phoneVerifiedAt: timestamp("phone_verified_at"),
+
+    // Business Information
+    businessDocuments: jsonb("business_documents"), // Store business registration, permits, etc.
 
     // Identity Verification
     identityVerificationStatus: varchar("identity_verification_status", {
@@ -39,7 +43,11 @@ export const usersTable = pgTable(
     isActive: boolean("is_active").default(true).notNull(),
     isSuspended: boolean("is_suspended").default(false).notNull(),
     suspendedAt: timestamp("suspended_at"),
+    suspensionExpiresAt: timestamp("suspension_expires_at"), // When suspension ends
     suspensionReason: text("suspension_reason"),
+    isBanned: boolean("is_banned").default(false).notNull(),
+    bannedAt: timestamp("banned_at"),
+    banReason: text("ban_reason"),
 
     // Security
     lastLoginAt: timestamp("last_login_at"),
@@ -247,7 +255,9 @@ export const transactions = pgTable(
     meetupLocation: text("meetup_location"),
     meetupCoordinates: jsonb("meetup_coordinates"), // { lat, lng, address }
     scheduledMeetupAt: timestamp("scheduled_meetup_at"),
-    meetupProposedBy: uuid("meetup_proposed_by").references(() => usersTable.id),
+    meetupProposedBy: uuid("meetup_proposed_by").references(
+      () => usersTable.id
+    ),
 
     // Transaction lifecycle
     startedAt: timestamp("started_at").notNull().defaultNow(),
@@ -293,6 +303,31 @@ export const transactions = pgTable(
   })
 );
 
+export const reportsTable = pgTable("reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reporterId: uuid("reporter_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  reportedUserId: uuid("reported_user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => productsTable.id, { onDelete: "cascade" }),
+  transactionId: uuid("transaction_id")
+    .notNull()
+    .references(() => transactions.id, { onDelete: "cascade" }),
+  reportType: text("report_type").notNull(), // e.g., 'wrong_item', 'no_show', 'physical_damage'
+  details: text("details"), // Optional user-provided details
+  status: varchar("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const reviews = pgTable(
   "reviews",
   {
@@ -328,17 +363,12 @@ export const reviews = pgTable(
     reviewerRole: varchar("reviewer_role", { length: 20 }).notNull(), // 'buyer' or 'seller'
     revieweeRole: varchar("reviewee_role", { length: 20 }).notNull(), // 'buyer' or 'seller'
 
-    // Response to review
-    response: text("response"), // Reviewee can respond to the review
-    respondedAt: timestamp("responded_at"),
-
     // Verification
     isVerifiedTransaction: boolean("is_verified_transaction").default(true),
 
     // Privacy
     isAnonymous: boolean("is_anonymous").default(false), // If true, reviewer name/avatar hidden in public display
 
-    // Audit trail
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
       .notNull()
@@ -458,6 +488,7 @@ export const productImagesTable = pgTable(
       .references(() => productsTable.id, { onDelete: "cascade" }),
 
     imageUrl: text("image_url").notNull(),
+    imageType: varchar("image_type", { length: 20 }).default("product").notNull(), // 'product' or 'maintenance'
     order: varchar("order", { length: 10 }).notNull(), // Display order
     isPrimary: boolean("is_primary").default(false).notNull(),
 
@@ -465,6 +496,7 @@ export const productImagesTable = pgTable(
   },
   (table) => ({
     productIdIdx: index("product_images_product_id_idx").on(table.productId),
+    imageTypeIdx: index("product_images_image_type_idx").on(table.imageType),
   })
 );
 
@@ -606,15 +638,49 @@ export const notificationsTable = pgTable("notifications", {
   userId: uuid("user_id")
     .notNull()
     .references(() => usersTable.id, { onDelete: "cascade" }),
-
+  image_url: text("image_url").notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false).notNull(),
   status: varchar("status", { length: 50 }).default("active").notNull(), // 'active', 'read', 'archived'
-  type: varchar("type", { length: 50 }).notNull(), // 'bid', 'offer', 'buy', 'transaction', 'system', 'favorite', 'order', 'message'
+  type: varchar("type", { length: 50 }).notNull(), // 'user, system'
+  route_name: text("route_name"),
+  route_params: text("route_params"),
   data: jsonb("data"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Device tokens for push notifications
+export const deviceTokensTable = pgTable(
+  "device_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+
+    // Expo push token
+    expoPushToken: varchar("expo_push_token", { length: 255 })
+      .notNull()
+      .unique(),
+
+    // Device information (optional, for debugging)
+    deviceName: varchar("device_name", { length: 255 }),
+    deviceType: varchar("device_type", { length: 50 }), // 'ios', 'android'
+
+    // Status
+    isActive: boolean("is_active").default(true).notNull(),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("device_tokens_user_id_idx").on(table.userId),
+    tokenIdx: index("device_tokens_token_idx").on(table.expoPushToken),
+  })
+);
 
 // Conversations (messaging between users)
 export const conversationsTable = pgTable(
@@ -679,7 +745,9 @@ export const messagesTable = pgTable(
     isRead: boolean("is_read").default(false).notNull(),
     readAt: timestamp("read_at", { withTimezone: true }),
 
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => ({
     conversationIdIdx: index("messages_conversation_id_idx").on(
@@ -744,10 +812,6 @@ export const locationUpdatesTable = pgTable(
     latitude: varchar("latitude", { length: 50 }).notNull(),
     longitude: varchar("longitude", { length: 50 }).notNull(),
     distance: varchar("distance", { length: 20 }), // In meters from last update
-    accuracy: varchar("accuracy", { length: 20 }), // In meters
-    heading: varchar("heading", { length: 10 }), // Direction of movement (0-360 degrees)
-    speed: varchar("speed", { length: 20 }), // In m/s
-
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({

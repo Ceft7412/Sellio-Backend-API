@@ -11,6 +11,8 @@ import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { validateApiKey } from "./middleware/apiKey.middleware";
 import { Server } from "socket.io";
 import http from "http";
+import { handleLocationUpdate } from "./controllers/location.controller";
+import { startCronJobs, stopCronJobs } from "./jobs";
 
 const app = express();
 
@@ -47,6 +49,51 @@ io.on("connection", (socket) => {
     userSockets.set(userId, socket.id);
     socket.join(userId); // Join a room with userId
   });
+
+  // User joins a conversation room for location sharing
+  socket.on("join_conversation", (conversationId: string) => {
+    console.log(`Socket ${socket.id} joined conversation room ${conversationId}`);
+    socket.join(conversationId);
+  });
+
+  // User leaves a conversation room
+  socket.on("leave_conversation", (conversationId: string) => {
+    console.log(`Socket ${socket.id} left conversation room ${conversationId}`);
+    socket.leave(conversationId);
+  });
+
+  // Handle location updates via WebSocket
+  socket.on(
+    "update_location",
+    async (data: {
+      conversationId: string;
+      latitude: number;
+      longitude: number;
+    }) => {
+      // Import location controller handler
+
+      // Get userId from socket mapping
+      let userId: string | undefined;
+      for (const [uid, sid] of userSockets.entries()) {
+        if (sid === socket.id) {
+          userId = uid;
+          break;
+        }
+      }
+
+      if (!userId) {
+        socket.emit("error", { message: "User not authenticated" });
+        return;
+      }
+
+      try {
+        await handleLocationUpdate(userId, data);
+      } catch (error) {
+        console.error("Error handling location update:", error);
+        socket.emit("error", { message: "Failed to update location" });
+      }
+    }
+  );
 
   socket.on("disconnect", () => {
     console.log("User disconnected", socket.id);
@@ -90,4 +137,24 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📍 API available at http://localhost:${PORT}/api/v1`);
+
+  // Start cron jobs
+  startCronJobs();
+});
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("SIGTERM signal received: closing HTTP server");
+  stopCronJobs();
+  server.close(() => {
+    console.log("HTTP server closed");
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("SIGINT signal received: closing HTTP server");
+  stopCronJobs();
+  server.close(() => {
+    console.log("HTTP server closed");
+  });
 });

@@ -1,18 +1,36 @@
-import { request, Request, response, Response } from "express";
+import { Request, Response } from "express";
 import { db } from "../db/connection";
-import { productsTable, productImagesTable, usersTable, categoriesTable, reviews, productFavoritesTable } from "../db/schema";
-import { eq, desc, and, avg } from "drizzle-orm";
+import {
+  productsTable,
+  productImagesTable,
+  usersTable,
+  categoriesTable,
+  reviews,
+  productFavoritesTable,
+  productViewsTable,
+  offersTable,
+  transactions,
+} from "../db/schema";
+import { eq, desc, and, avg, sql, inArray } from "drizzle-orm";
 import { AppError } from "../middleware/error.middleware";
 import { AuthRequest } from "../middleware/auth.middleware";
 import {
   uploadToGCS,
   generateUniqueFileName,
 } from "../services/storage.service";
+import { registerProductToBlockchain } from "../blockchain/productRegistry";
 
 // Get all products (with optional filters)
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    const { category, sub_category, status, saleType, limit = "20", offset = "0" } = req.query;
+    const {
+      category,
+      sub_category,
+      status,
+      saleType,
+      limit = "20",
+      offset = "0",
+    } = req.query;
 
     // Build query conditions
     const conditions: any[] = [];
@@ -22,7 +40,9 @@ export const getProducts = async (req: Request, res: Response) => {
     }
 
     if (sub_category) {
-      conditions.push(eq(productsTable.sub_category_id, sub_category as string));
+      conditions.push(
+        eq(productsTable.sub_category_id, sub_category as string)
+      );
     }
 
     if (status) {
@@ -93,7 +113,9 @@ export const getProducts = async (req: Request, res: Response) => {
             .from(categoriesTable)
             .where(eq(categoriesTable.id, product.category_id))
             .limit(1);
-          category = cat ? { id: cat.id, name: cat.name, image_url: cat.image_url } : null;
+          category = cat
+            ? { id: cat.id, name: cat.name, image_url: cat.image_url }
+            : null;
         }
 
         // Fetch subcategory if exists
@@ -104,7 +126,9 @@ export const getProducts = async (req: Request, res: Response) => {
             .from(categoriesTable)
             .where(eq(categoriesTable.id, product.sub_category_id))
             .limit(1);
-          subCategory = subCat ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url } : null;
+          subCategory = subCat
+            ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url }
+            : null;
         }
 
         return {
@@ -117,11 +141,13 @@ export const getProducts = async (req: Request, res: Response) => {
             isPrimary: img.isPrimary,
             order: img.order,
           })),
-          coverImage: images.find((img) => img.isPrimary)?.imageUrl || images[0]?.imageUrl || null,
+          coverImage:
+            images.find((img) => img.isPrimary)?.imageUrl ||
+            images[0]?.imageUrl ||
+            null,
         };
       })
     );
-
 
     res.json({
       message: "Products fetched successfully",
@@ -135,7 +161,6 @@ export const getProducts = async (req: Request, res: Response) => {
     throw new AppError("Failed to get products", 500);
   }
 };
-
 
 // Get single product by ID
 export const getProductById = async (req: Request, res: Response) => {
@@ -165,6 +190,7 @@ export const getProductById = async (req: Request, res: Response) => {
         attributes: productsTable.attributes,
         minimumBid: productsTable.minimumBid,
         biddingEndsAt: productsTable.biddingEndsAt,
+        blockchainAddress: productsTable.blockchain_address || "",
         createdAt: productsTable.createdAt,
         // Seller information
         seller: {
@@ -200,12 +226,16 @@ export const getProductById = async (req: Request, res: Response) => {
       isFavorited = !!favorite;
     }
 
-    // Fetch product images
-    const images = await db
+    // Fetch product images (all types)
+    const allImages = await db
       .select()
       .from(productImagesTable)
       .where(eq(productImagesTable.productId, product.id))
       .orderBy(desc(productImagesTable.isPrimary));
+
+    // Separate product images and maintenance images
+    const images = allImages.filter(img => img.imageType === 'product');
+    const maintenanceImages = allImages.filter(img => img.imageType === 'maintenance');
 
     // Fetch category if exists
     let category = null;
@@ -215,7 +245,9 @@ export const getProductById = async (req: Request, res: Response) => {
         .from(categoriesTable)
         .where(eq(categoriesTable.id, product.category_id))
         .limit(1);
-      category = cat ? { id: cat.id, name: cat.name, image_url: cat.image_url } : null;
+      category = cat
+        ? { id: cat.id, name: cat.name, image_url: cat.image_url }
+        : null;
     }
 
     // Fetch subcategory if exists
@@ -226,7 +258,9 @@ export const getProductById = async (req: Request, res: Response) => {
         .from(categoriesTable)
         .where(eq(categoriesTable.id, product.sub_category_id))
         .limit(1);
-      subCategory = subCat ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url } : null;
+      subCategory = subCat
+        ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url }
+        : null;
     }
 
     // Calculate seller's average rating
@@ -250,6 +284,14 @@ export const getProductById = async (req: Request, res: Response) => {
         : 0;
     }
 
+    // Get total view count for this product
+    const viewCountResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(productViewsTable)
+      .where(eq(productViewsTable.productId, id));
+
+    const viewCount = viewCountResult[0]?.count || 0;
+
     // Format response
     const productDetails = {
       ...product,
@@ -265,8 +307,17 @@ export const getProductById = async (req: Request, res: Response) => {
         isPrimary: img.isPrimary,
         order: img.order,
       })),
-      coverImage: images.find((img) => img.isPrimary)?.imageUrl || images[0]?.imageUrl || null,
+      maintenanceImages: maintenanceImages.map((img) => ({
+        id: img.id,
+        url: img.imageUrl,
+        order: img.order,
+      })),
+      coverImage:
+        images.find((img) => img.isPrimary)?.imageUrl ||
+        images[0]?.imageUrl ||
+        null,
       isFavorited, // Add favorite status for current user
+      viewCount, // Add view count
     };
 
     res.json({
@@ -325,15 +376,22 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
     throw new AppError("Starting bid is required for bidding type", 400);
   }
 
-  // Get uploaded files from multer
-  const files = req.files as Express.Multer.File[];
+  // Get uploaded files from multer (now supports multiple fields)
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-  if (!files || files.length === 0) {
+  const productImages = files?.images || [];
+  const maintenanceImages = files?.maintenanceImages || [];
+
+  if (productImages.length === 0) {
     throw new AppError("At least one product image is required", 400);
   }
 
-  if (files.length > 10) {
-    throw new AppError("Maximum 10 images allowed", 400);
+  if (productImages.length > 10) {
+    throw new AppError("Maximum 10 product images allowed", 400);
+  }
+
+  if (maintenanceImages.length > 10) {
+    throw new AppError("Maximum 10 maintenance checklist images allowed", 400);
   }
 
   try {
@@ -353,16 +411,36 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
         allowOffers: saleType === "negotiable" || allowOffers,
         allowBidding: saleType === "bidding" || allowBidding,
         minimumBid: saleType === "bidding" ? minimumBid : null,
-        biddingEndsAt: biddingEndsAt ? new Date(biddingEndsAt) : null,
+        biddingEndsAt:
+          saleType === "bidding"
+            ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days from now for bidding products
+            : biddingEndsAt
+            ? new Date(biddingEndsAt)
+            : null,
         location,
         attributes: dynamicAttributes,
         status: "active",
       })
       .returning();
 
-    // Step 2: Upload images to GCS asynchronously (don't await)
-    // Process image uploads in the background
-    const imageUploadPromises = files.map(async (file, index) => {
+    // Step 2: Register product to blockchain (fire-and-forget)
+    registerProductToBlockchain(
+      newProduct.id,
+      newProduct.title,
+      newProduct.price,
+      JSON.stringify(newProduct.attributes || {}),
+      (saleType === "bidding").toString(),
+      (saleType === "negotiable").toString(),
+      userId,
+      newProduct.createdAt.toISOString()
+    ).catch((error) => {
+      console.error("Error registering product to blockchain:", error);
+      // Don't throw - blockchain registration is not critical for product creation
+    });
+
+    // Step 3: Upload images to GCS asynchronously (don't await)
+    // Process product images
+    const productImageUploadPromises = productImages.map(async (file, index) => {
       try {
         // Generate unique filename
         const uniqueFileName = generateUniqueFileName(file.originalname);
@@ -375,32 +453,64 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
           "product_images"
         );
 
-        // Determine if this is the primary image (first image or marked as cover)
+        // Determine if this is the primary image (first image)
         const isPrimary = index === 0;
 
-        // Save image record to database
+        // Save image record to database with imageType: 'product'
         await db.insert(productImagesTable).values({
           productId: newProduct.id,
           imageUrl,
+          imageType: 'product',
           order: index.toString(),
           isPrimary,
         });
 
-        console.log(`Image ${index + 1} uploaded successfully: ${imageUrl}`);
+        console.log(`Product image ${index + 1} uploaded successfully: ${imageUrl}`);
       } catch (error) {
-        console.error(`Error uploading image ${index + 1}:`, error);
+        console.error(`Error uploading product image ${index + 1}:`, error);
         // Don't throw error - just log it, so other images can continue uploading
       }
     });
 
-    // Start uploading images in background (don't await)
-    Promise.all(imageUploadPromises).catch((error) => {
+    // Process maintenance checklist images
+    const maintenanceImageUploadPromises = maintenanceImages.map(async (file, index) => {
+      try {
+        // Generate unique filename
+        const uniqueFileName = generateUniqueFileName(file.originalname);
+
+        // Upload to GCS
+        const imageUrl = await uploadToGCS(
+          file.buffer,
+          uniqueFileName,
+          file.mimetype,
+          "product_images"
+        );
+
+        // Save image record to database with imageType: 'maintenance'
+        await db.insert(productImagesTable).values({
+          productId: newProduct.id,
+          imageUrl,
+          imageType: 'maintenance',
+          order: index.toString(),
+          isPrimary: false, // Maintenance images are never primary
+        });
+
+        console.log(`Maintenance image ${index + 1} uploaded successfully: ${imageUrl}`);
+      } catch (error) {
+        console.error(`Error uploading maintenance image ${index + 1}:`, error);
+        // Don't throw error - just log it, so other images can continue uploading
+      }
+    });
+
+    // Start uploading all images in background (don't await)
+    Promise.all([...productImageUploadPromises, ...maintenanceImageUploadPromises]).catch((error) => {
       console.error("Error in image upload process:", error);
     });
 
-    // Step 3: Return the created product immediately
+    // Step 4: Return the created product immediately
     res.status(201).json({
-      message: "Product created successfully. Images are being uploaded.",
+      message:
+        "Product created successfully. Images and blockchain registration in progress.",
       product: {
         id: newProduct.id,
         title: newProduct.title,
@@ -424,14 +534,10 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
 };
 
 // Update product
-export const updateProduct = async (req: AuthRequest, res: Response) => {
- 
-};
+export const updateProduct = async (req: AuthRequest, res: Response) => {};
 
 // Delete product
-export const deleteProduct = async (req: AuthRequest, res: Response) => {
-  
-};
+export const deleteProduct = async (req: AuthRequest, res: Response) => {};
 
 // Get user's products
 export const getUserProducts = async (req: AuthRequest, res: Response) => {
@@ -447,14 +553,50 @@ export const getUserProducts = async (req: AuthRequest, res: Response) => {
     .where(eq(productsTable.sellerId, userId))
     .orderBy(desc(productsTable.createdAt));
 
+  // Get product IDs
+  const productIds = products.map((p) => p.id);
+
+  // Fetch all product images at once
+  const allProductImages =
+    productIds.length > 0
+      ? await db
+          .select()
+          .from(productImagesTable)
+          .where(inArray(productImagesTable.productId, productIds))
+      : [];
+
+  // Group images by product ID
+  const imagesByProduct = allProductImages.reduce((acc: any, img: any) => {
+    if (!acc[img.productId]) acc[img.productId] = [];
+    acc[img.productId].push(img);
+    return acc;
+  }, {});
+
+  // Add coverImage to each product
+  const productsWithImages = products.map((product) => {
+    const images = imagesByProduct[product.id] || [];
+    const coverImage =
+      images.find((img: any) => img.isPrimary)?.imageUrl ||
+      images[0]?.imageUrl ||
+      null;
+
+    return {
+      ...product,
+      coverImage,
+    };
+  });
+
   res.json({
-    products,
-    count: products.length,
+    products: productsWithImages,
+    count: productsWithImages.length,
   });
 };
 
 // Toggle favorite product (add or remove)
-export const toggleFavoriteProduct = async (req: AuthRequest, res: Response) => {
+export const toggleFavoriteProduct = async (
+  req: AuthRequest,
+  res: Response
+) => {
   const userId = req.user?.id;
   const { id: productId } = req.params;
 
@@ -554,7 +696,10 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
         },
       })
       .from(productFavoritesTable)
-      .leftJoin(productsTable, eq(productFavoritesTable.productId, productsTable.id))
+      .leftJoin(
+        productsTable,
+        eq(productFavoritesTable.productId, productsTable.id)
+      )
       .leftJoin(usersTable, eq(productsTable.sellerId, usersTable.id))
       .where(eq(productFavoritesTable.userId, userId))
       .orderBy(desc(productFavoritesTable.createdAt));
@@ -579,7 +724,9 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
             .from(categoriesTable)
             .where(eq(categoriesTable.id, favorite.product.category_id))
             .limit(1);
-          category = cat ? { id: cat.id, name: cat.name, image_url: cat.image_url } : null;
+          category = cat
+            ? { id: cat.id, name: cat.name, image_url: cat.image_url }
+            : null;
         }
 
         // Fetch subcategory if exists
@@ -590,7 +737,9 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
             .from(categoriesTable)
             .where(eq(categoriesTable.id, favorite.product.sub_category_id))
             .limit(1);
-          subCategory = subCat ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url } : null;
+          subCategory = subCat
+            ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url }
+            : null;
         }
 
         return {
@@ -606,7 +755,10 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
               isPrimary: img.isPrimary,
               order: img.order,
             })),
-            coverImage: images.find((img) => img.isPrimary)?.imageUrl || images[0]?.imageUrl || null,
+            coverImage:
+              images.find((img) => img.isPrimary)?.imageUrl ||
+              images[0]?.imageUrl ||
+              null,
           },
         };
       })
@@ -623,5 +775,228 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("Error getting user favorites:", error);
     throw new AppError("Failed to get favorites", 500);
+  }
+};
+
+// Track product view (only count first-time views per user)
+export const trackProductView = async (req: AuthRequest, res: Response) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user?.id;
+
+    if (!productId) {
+      throw new AppError("Product ID is required", 400);
+    }
+
+    // Check if product exists
+    const [product] = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, productId))
+      .limit(1);
+
+    if (!product) {
+      throw new AppError("Product not found", 404);
+    }
+
+    // For authenticated users, check if they've already viewed this product
+    if (userId) {
+      const [existingView] = await db
+        .select()
+        .from(productViewsTable)
+        .where(
+          and(
+            eq(productViewsTable.productId, productId),
+            eq(productViewsTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      // If user hasn't viewed this product before, create a new view record
+      if (!existingView) {
+        await db.insert(productViewsTable).values({
+          productId,
+          userId,
+        });
+      }
+    } else {
+      // For anonymous users, always create a view record (with null userId)
+      await db.insert(productViewsTable).values({
+        productId,
+        userId: null,
+      });
+    }
+
+    // Get total view count for this product
+    const viewCountResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(productViewsTable)
+      .where(eq(productViewsTable.productId, productId));
+
+    const viewCount = viewCountResult[0]?.count || 0;
+
+    res.status(200).json({
+      message: "Product view tracked successfully",
+      viewCount,
+    });
+  } catch (error) {
+    console.error("Error tracking product view:", error);
+    throw error;
+  }
+};
+
+// Get seller analytics
+export const getSellerAnalytics = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) throw new AppError("User not authenticated", 401);
+
+    // Get all seller's products
+    const sellerProducts = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.sellerId, userId));
+
+    const productIds = sellerProducts.map((p) => p.id);
+
+    // Get active listings count
+    const activeListings = sellerProducts.filter(
+      (p) => p.status === "active"
+    ).length;
+
+    // Get total views for all products
+    let totalViews = 0;
+    if (productIds.length > 0) {
+      const viewsResult = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(productViewsTable)
+        .where(inArray(productViewsTable.productId, productIds));
+      totalViews = viewsResult[0]?.count || 0;
+    }
+
+    // Get pending offers count (offers that are pending on seller's products)
+    let pendingOffers = 0;
+    if (productIds.length > 0) {
+      const offersResult = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(offersTable)
+        .where(
+          and(
+            inArray(offersTable.productId, productIds),
+            eq(offersTable.status, "pending")
+          )
+        );
+      pendingOffers = offersResult[0]?.count || 0;
+    }
+
+    // Get active transactions count (where user is seller)
+    const activeTransactionsResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.sellerId, userId),
+          eq(transactions.status, "active")
+        )
+      );
+    const activeTransactions = activeTransactionsResult[0]?.count || 0;
+
+    // Get sales data for the last 30 days (completed transactions)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const salesData = await db
+      .select({
+        completedAt: transactions.completedAt,
+        agreedPrice: transactions.agreedPrice,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.sellerId, userId),
+          eq(transactions.status, "completed")
+        )
+      );
+
+    // Calculate total revenue and sales count
+    const totalRevenue = salesData.reduce(
+      (sum, sale) => sum + parseFloat(sale.agreedPrice),
+      0
+    );
+    const totalSales = salesData.length;
+    const avgSale = totalSales > 0 ? totalRevenue / totalSales : 0;
+
+    // Group sales by date for chart
+    const salesByDate: { [key: string]: number } = {};
+    salesData.forEach((sale) => {
+      if (sale.completedAt) {
+        const date = new Date(sale.completedAt).toISOString().split("T")[0];
+        salesByDate[date] =
+          (salesByDate[date] || 0) + parseFloat(sale.agreedPrice);
+      }
+    });
+
+    // Get product distribution by status
+    const productsByStatus = {
+      active: sellerProducts.filter((p) => p.status === "active").length,
+      sold: sellerProducts.filter((p) => p.status === "sold").length,
+      draft: sellerProducts.filter((p) => p.status === "draft").length,
+      expired: sellerProducts.filter((p) => p.status === "expired").length,
+    };
+
+    // Get product distribution by category
+    const categoryIds = sellerProducts
+      .map((p) => p.category_id)
+      .filter((id): id is string => id !== null);
+
+    let productsByCategory: { [key: string]: { name: string; count: number } } =
+      {};
+
+    if (categoryIds.length > 0) {
+      // Fetch category details
+      const categories = await db
+        .select()
+        .from(categoriesTable)
+        .where(inArray(categoriesTable.id, categoryIds));
+
+      // Count products per category
+      const categoryCounts: { [key: string]: number } = {};
+      sellerProducts.forEach((product) => {
+        if (product.category_id) {
+          categoryCounts[product.category_id] =
+            (categoryCounts[product.category_id] || 0) + 1;
+        }
+      });
+
+      // Map category IDs to names and counts
+      categories.forEach((category) => {
+        if (categoryCounts[category.id]) {
+          productsByCategory[category.id] = {
+            name: category.name,
+            count: categoryCounts[category.id],
+          };
+        }
+      });
+    }
+
+    res.status(200).json({
+      message: "Seller analytics fetched successfully",
+      analytics: {
+        activeListings,
+        pendingOffers,
+        activeTransactions,
+        totalViews,
+        totalRevenue,
+        totalSales,
+        avgSale,
+        salesByDate,
+        productsByStatus,
+        productsByCategory,
+      },
+    });
+  } catch (error) {
+    console.error("Error getting seller analytics:", error);
+    throw error;
   }
 };
