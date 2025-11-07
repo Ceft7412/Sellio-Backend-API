@@ -13,7 +13,7 @@ const socketUsers = new Map<string, string>(); // socketId -> userId
  */
 function verifySocketAuth(token: string): string | null {
   try {
-    const jwtSecret = config.jwt.accessTokenSecret;
+    const jwtSecret = config.jwt.secret;
     if (!jwtSecret) {
       console.error("JWT secret not configured");
       return null;

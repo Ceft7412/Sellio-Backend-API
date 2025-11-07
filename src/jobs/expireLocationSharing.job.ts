@@ -141,8 +141,5 @@ export const expireLocationSharingJob = cron.schedule(
     } catch (error) {
       console.error("❌ Error in location sharing expiration job:", error);
     }
-  },
-  {
-    scheduled: false, // Don't start automatically
   }
 );

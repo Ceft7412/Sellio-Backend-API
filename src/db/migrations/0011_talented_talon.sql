@@ -1,2 +1,0 @@
-ALTER TABLE "product_images" ADD COLUMN "image_type" varchar(20) DEFAULT 'product' NOT NULL;--> statement-breakpoint
-CREATE INDEX "product_images_image_type_idx" ON "product_images" USING btree ("image_type");

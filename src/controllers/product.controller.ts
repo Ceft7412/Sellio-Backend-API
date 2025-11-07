@@ -674,26 +674,22 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
       .select({
         id: productFavoritesTable.id,
         createdAt: productFavoritesTable.createdAt,
-        product: {
-          id: productsTable.id,
-          title: productsTable.title,
-          description: productsTable.description,
-          price: productsTable.price,
-          originalPrice: productsTable.originalPrice,
-          condition: productsTable.condition,
-          saleType: productsTable.saleType,
-          location: productsTable.location,
-          category_id: productsTable.category_id,
-          sub_category_id: productsTable.sub_category_id,
-          status: productsTable.status,
-          createdAt: productsTable.createdAt,
-          seller: {
-            id: usersTable.id,
-            displayName: usersTable.displayName,
-            avatarUrl: usersTable.avatarUrl,
-            verified: usersTable.identityVerifiedAt,
-          },
-        },
+        productId: productsTable.id,
+        productTitle: productsTable.title,
+        productDescription: productsTable.description,
+        productPrice: productsTable.price,
+        productOriginalPrice: productsTable.originalPrice,
+        productCondition: productsTable.condition,
+        productSaleType: productsTable.saleType,
+        productLocation: productsTable.location,
+        productCategoryId: productsTable.category_id,
+        productSubCategoryId: productsTable.sub_category_id,
+        productStatus: productsTable.status,
+        productCreatedAt: productsTable.createdAt,
+        sellerId: usersTable.id,
+        sellerDisplayName: usersTable.displayName,
+        sellerAvatarUrl: usersTable.avatarUrl,
+        sellerVerified: usersTable.identityVerifiedAt,
       })
       .from(productFavoritesTable)
       .leftJoin(
@@ -707,22 +703,22 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
     // Fetch images and categories for each product
     const favoritesWithDetails = await Promise.all(
       favorites.map(async (favorite) => {
-        if (!favorite.product) return null;
+        if (!favorite.productId) return null;
 
         // Fetch images
         const images = await db
           .select()
           .from(productImagesTable)
-          .where(eq(productImagesTable.productId, favorite.product.id))
+          .where(eq(productImagesTable.productId, favorite.productId))
           .orderBy(desc(productImagesTable.isPrimary));
 
         // Fetch category if exists
         let category = null;
-        if (favorite.product.category_id) {
+        if (favorite.productCategoryId) {
           const [cat] = await db
             .select()
             .from(categoriesTable)
-            .where(eq(categoriesTable.id, favorite.product.category_id))
+            .where(eq(categoriesTable.id, favorite.productCategoryId))
             .limit(1);
           category = cat
             ? { id: cat.id, name: cat.name, image_url: cat.image_url }
@@ -731,11 +727,11 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
 
         // Fetch subcategory if exists
         let subCategory = null;
-        if (favorite.product.sub_category_id) {
+        if (favorite.productSubCategoryId) {
           const [subCat] = await db
             .select()
             .from(categoriesTable)
-            .where(eq(categoriesTable.id, favorite.product.sub_category_id))
+            .where(eq(categoriesTable.id, favorite.productSubCategoryId))
             .limit(1);
           subCategory = subCat
             ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url }
@@ -746,7 +742,24 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
           id: favorite.id,
           createdAt: favorite.createdAt,
           product: {
-            ...favorite.product,
+            id: favorite.productId,
+            title: favorite.productTitle,
+            description: favorite.productDescription,
+            price: favorite.productPrice,
+            originalPrice: favorite.productOriginalPrice,
+            condition: favorite.productCondition,
+            saleType: favorite.productSaleType,
+            location: favorite.productLocation,
+            category_id: favorite.productCategoryId,
+            sub_category_id: favorite.productSubCategoryId,
+            status: favorite.productStatus,
+            createdAt: favorite.productCreatedAt,
+            seller: {
+              id: favorite.sellerId,
+              displayName: favorite.sellerDisplayName,
+              avatarUrl: favorite.sellerAvatarUrl,
+              verified: favorite.sellerVerified,
+            },
             category,
             subCategory,
             images: images.map((img) => ({
