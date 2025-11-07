@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { authenticateToken } from "../middleware/auth.middleware";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 import {
   registerDeviceToken,
   unregisterDeviceToken,
   getUserDeviceTokens,
-} from "../controllers/deviceToken.controller";
+} from "../controllers/deviceToken.controller.js";
 
 const router = Router();
 

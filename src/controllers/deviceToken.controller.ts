@@ -1,8 +1,8 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { db } from "../db/connection";
-import { deviceTokensTable } from "../db/schema";
-import { AppError } from "../middleware/error.middleware";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { db } from "../db/connection.js";
+import { deviceTokensTable } from "../db/schema.js";
+import { AppError } from "../middleware/error.middleware.js";
 import { eq, and } from "drizzle-orm";
 
 /**

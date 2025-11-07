@@ -1,11 +1,11 @@
 import cron from "node-cron";
-import { db } from "../db/connection";
+import { db } from "../db/connection.js";
 import {
   locationSharingSessionsTable,
   conversationsTable,
-} from "../db/schema";
+} from "../db/schema.js";
 import { eq, and, or, lt } from "drizzle-orm";
-import { io } from "../index";
+import { io } from "../index.js";
 
 /**
  * Auto-expire location sharing sessions that have been active for 1 hour

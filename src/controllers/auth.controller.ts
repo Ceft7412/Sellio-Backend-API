@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import { db } from "../db/connection";
-import { usersTable, socialAccountsTable } from "../db/schema";
+import { db } from "../db/connection.js";
+import { usersTable, socialAccountsTable } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middleware/error.middleware.js";
 import { OAuth2Client } from "google-auth-library";
-import { config } from "../constants/config";
+import { config } from "../constants/config.js";
 
 const JWT_SECRET = config.jwt.secret;
 const JWT_EXPIRES_IN = config.jwt.expiresIn;

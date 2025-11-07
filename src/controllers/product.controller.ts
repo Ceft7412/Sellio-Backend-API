@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { db } from "../db/connection";
+import { db } from "../db/connection.js";
 import {
   productsTable,
   productImagesTable,
@@ -10,15 +10,15 @@ import {
   productViewsTable,
   offersTable,
   transactions,
-} from "../db/schema";
+} from "../db/schema.js";
 import { eq, desc, and, avg, sql, inArray } from "drizzle-orm";
-import { AppError } from "../middleware/error.middleware";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/error.middleware.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import {
   uploadToGCS,
   generateUniqueFileName,
-} from "../services/storage.service";
-import { registerProductToBlockchain } from "../blockchain/productRegistry";
+} from "../services/storage.service.js";
+import { registerProductToBlockchain } from "../blockchain/productRegistry.js";
 
 // Get all products (with optional filters)
 export const getProducts = async (req: Request, res: Response) => {

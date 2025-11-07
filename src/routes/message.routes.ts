@@ -8,9 +8,9 @@ import {
     sendMessage,
     markMessagesAsRead,
     uploadChatImage
-} from "../controllers/message.controller";
+} from "../controllers/message.controller.js";
 import { Router } from "express";
-import { authenticateToken } from "../middleware/auth.middleware";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 import multer from "multer";
 
 

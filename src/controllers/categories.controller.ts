@@ -1,8 +1,8 @@
 import { request, Request, response, Response } from "express";
-import { db } from "../db/connection";
-import { categoriesTable, productsTable } from "../db/schema";
+import { db } from "../db/connection.js";
+import { categoriesTable, productsTable } from "../db/schema.js";
 import { count, eq, isNull } from "drizzle-orm";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middleware/error.middleware.js";
 
 // Get all categories
 export const getAllCategories = async (req: Request, res: Response) => {

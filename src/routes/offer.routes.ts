@@ -6,8 +6,8 @@ import {
   acceptOffer,
   rejectOffer,
   updateOfferAmount,
-} from "../controllers/offer.controller";
-import { authenticateToken } from "../middleware/auth.middleware";
+} from "../controllers/offer.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

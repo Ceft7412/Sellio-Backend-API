@@ -1,8 +1,8 @@
 import { Server, Socket } from "socket.io";
-import { handleLocationUpdate } from "../controllers/location.controller.refactored";
-import { UpdateLocationData } from "../types/location.types";
+import { handleLocationUpdate } from "../controllers/location.controller.refactored.js";
+import { UpdateLocationData } from "../types/location.types.js";
 import jwt from "jsonwebtoken";
-import { config } from "../constants/config";
+import { config } from "../constants/config.js";
 
 // Store authenticated user socket mappings
 const userSockets = new Map<string, Set<string>>(); // userId -> Set of socketIds

@@ -1,10 +1,10 @@
 import { Response } from "express";
-import { AppError } from "../middleware/error.middleware";
-import { bidsTable, productsTable, usersTable, productImagesTable } from "../db/schema";
-import { db } from "../db/connection";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/error.middleware.js";
+import { bidsTable, productsTable, usersTable, productImagesTable } from "../db/schema.js";
+import { db } from "../db/connection.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import { eq, desc, and } from "drizzle-orm";
-import { notifyNewBid, notifyOutbid } from "./notification.controller";
+import { notifyNewBid, notifyOutbid } from "./notification.controller.js";
 
 // Get bids for a product
 export const getProductBids = async (req: AuthRequest, res: Response) => {

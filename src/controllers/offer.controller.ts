@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { db } from "../db/connection";
-import { offersTable, productsTable, messagesTable, conversationsTable, transactions, usersTable, productImagesTable } from "../db/schema";
+import { db } from "../db/connection.js";
+import { offersTable, productsTable, messagesTable, conversationsTable, transactions, usersTable, productImagesTable } from "../db/schema.js";
 import { eq, and, or } from "drizzle-orm";
-import { AppError } from "../middleware/error.middleware";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { io } from "../index";
-import { notifyNewOffer, notifyOfferAccepted, notifyOfferRejected } from "./notification.controller";
+import { AppError } from "../middleware/error.middleware.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { io } from "../index.js";
+import { notifyNewOffer, notifyOfferAccepted, notifyOfferRejected } from "./notification.controller.js";
 
 // Create an offer
 export const createOffer = async (req: AuthRequest, res: Response) => {

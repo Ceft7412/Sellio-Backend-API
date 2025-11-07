@@ -1,6 +1,6 @@
-import { loadContractData } from "./index";
-import { db } from "../db/connection";
-import { productsTable } from "../db/schema";
+import { loadContractData } from "./index.js";
+import { db } from "../db/connection.js";
+import { productsTable } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
 export async function registerProductToBlockchain(

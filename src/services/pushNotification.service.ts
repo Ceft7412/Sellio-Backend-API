@@ -1,5 +1,5 @@
-import { db } from "../db/connection";
-import { deviceTokensTable } from "../db/schema";
+import { db } from "../db/connection.js";
+import { deviceTokensTable } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";

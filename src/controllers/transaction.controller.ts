@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middleware/error.middleware.js";
 import {
   transactions,
   messagesTable,
@@ -12,24 +12,24 @@ import {
   productImagesTable,
   reviews,
   reviewImages,
-} from "../db/schema";
-import { db } from "../db/connection";
-import { AuthRequest } from "../middleware/auth.middleware";
+} from "../db/schema.js";
+import { db } from "../db/connection.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import { eq, desc, inArray, and } from "drizzle-orm";
-import { io } from "../index";
+import { io } from "../index.js";
 import {
   uploadToGCS,
   generateUniqueFileName,
-} from "../services/storage.service";
+} from "../services/storage.service.js";
 import {
   notifyMeetupProposed,
   notifyMeetupAccepted,
   notifyTransactionCompleted,
   notifyTransactionCancelled,
   notifyProductSold,
-} from "./notification.controller";
-import { registerReviewToBlockchain } from "../blockchain/reviewRegistry";
-import { registerTransactionToBlockchain } from "../blockchain/transactionRegistry";
+} from "./notification.controller.js";
+import { registerReviewToBlockchain } from "../blockchain/reviewRegistry.js";
+import { registerTransactionToBlockchain } from "../blockchain/transactionRegistry.js";
 
 const generateReferenceNumber = () => {
   const min = 100000000000; // 12 digits

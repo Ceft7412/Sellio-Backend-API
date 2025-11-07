@@ -6,13 +6,13 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import routes from "./routes";
-import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
-import { validateApiKey } from "./middleware/apiKey.middleware";
+import routes from "./routes/index.js";
+import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
+import { validateApiKey } from "./middleware/apiKey.middleware.js";
 import { Server } from "socket.io";
 import http from "http";
-import { handleLocationUpdate } from "./controllers/location.controller";
-import { startCronJobs, stopCronJobs } from "./jobs";
+import { handleLocationUpdate } from "./controllers/location.controller.js";
+import { startCronJobs, stopCronJobs } from "./jobs/index.js";
 
 const app = express();
 

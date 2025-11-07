@@ -4,8 +4,8 @@ import {
   stopLocationSharing,
   updateLocation,
   getLocationSession,
-} from "../controllers/location.controller";
-import { authenticateToken } from "../middleware/auth.middleware";
+} from "../controllers/location.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

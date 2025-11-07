@@ -1,10 +1,10 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { AppError } from "../middleware/error.middleware";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../middleware/error.middleware.js";
 import {
   uploadToGCS,
   generateUniqueFileName,
-} from "../services/storage.service";
+} from "../services/storage.service.js";
 
 export const uploadAvatar = async (req: AuthRequest, res: Response) => {
   try {

@@ -4,7 +4,7 @@ import {
   getAllCategoriesWithoutParent,
   getAllCategoriesWithTotalProducts,
   getCategoryById,
-} from "../controllers/categories.controller";
+} from "../controllers/categories.controller.js";
 
 const router = Router();
 

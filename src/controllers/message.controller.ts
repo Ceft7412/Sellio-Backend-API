@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middleware/error.middleware.js";
 import {
   conversationsTable,
   offersTable,
@@ -7,25 +7,25 @@ import {
   transactions,
   bidsTable,
   productsTable,
-} from "../db/schema";
-import { db } from "../db/connection";
-import { AuthRequest } from "../middleware/auth.middleware";
+} from "../db/schema.js";
+import { db } from "../db/connection.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import { desc, eq, inArray, or } from "drizzle-orm";
 
-import { messagesTable } from "../db/schema";
+import { messagesTable } from "../db/schema.js";
 import { and } from "drizzle-orm";
-import { io } from "../index";
+import { io } from "../index.js";
 import {
   uploadToGCS,
   generateUniqueFileName,
-} from "../services/storage.service";
+} from "../services/storage.service.js";
 import {
   notifyNewMessage,
   notifyBuyRequest,
   notifyProductInquiry,
   notifyNewOffer,
-} from "./notification.controller";
-import { sendMessage as sendSMS } from "./sms.controller";
+} from "./notification.controller.js";
+import { sendMessage as sendSMS } from "./sms.controller.js";
 
 export const createNormalConversation = async (
   req: AuthRequest,

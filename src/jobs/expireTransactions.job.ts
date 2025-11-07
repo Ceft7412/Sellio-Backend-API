@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { db } from "../db/connection";
+import { db } from "../db/connection.js";
 import {
   transactions,
   conversationsTable,
@@ -8,9 +8,9 @@ import {
   offersTable,
   buysTable,
   bidsTable,
-} from "../db/schema";
+} from "../db/schema.js";
 import { eq, and, lt } from "drizzle-orm";
-import { io } from "../index";
+import { io } from "../index.js";
 
 /**
  * Auto-cancel transactions that are not completed within 24 hours of scheduled meetup

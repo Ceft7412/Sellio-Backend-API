@@ -1,5 +1,5 @@
-import { db } from "./connection";
-import { categoriesTable, categoryAttributesTable } from "./schema";
+import { db } from "./connection.js";
+import { categoriesTable, categoryAttributesTable } from "./schema.js";
 import { v4 as uuidv4 } from "uuid"; // Import the UUID generator
 // Map for temporary storage of generated IDs
 const generatedIdMap = new Map<string, string>();

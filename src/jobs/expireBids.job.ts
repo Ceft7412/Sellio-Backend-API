@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { db } from "../db/connection";
+import { db } from "../db/connection.js";
 import {
   productsTable,
   bidsTable,
@@ -8,11 +8,11 @@ import {
   messagesTable,
   usersTable,
   productImagesTable,
-} from "../db/schema";
+} from "../db/schema.js";
 import { eq, and, lt, desc } from "drizzle-orm";
-import { io } from "../index";
-import { notifyBidWon } from "../controllers/notification.controller";
-import { sendMessage as sendSMS } from "../controllers/sms.controller";
+import { io } from "../index.js";
+import { notifyBidWon } from "../controllers/notification.controller.js";
+import { sendMessage as sendSMS } from "../controllers/sms.controller.js";
 
 /**
  * Auto-close bidding for products where biddingEndsAt has passed

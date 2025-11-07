@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "./error.middleware";
+import { AppError } from "./error.middleware.js";
 
 const API_KEY = process.env.API_KEY || "271Iaww0QAz5Qce0n2nvwELJVU6froxw";
 

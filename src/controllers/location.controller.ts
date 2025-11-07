@@ -1,17 +1,17 @@
 import { Response } from "express";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middleware/error.middleware.js";
 import {
   locationSharingSessionsTable,
   locationUpdatesTable,
   conversationsTable,
   transactions,
-} from "../db/schema";
-import { db } from "../db/connection";
-import { AuthRequest } from "../middleware/auth.middleware";
+} from "../db/schema.js";
+import { db } from "../db/connection.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import { eq, and, desc } from "drizzle-orm";
-import { io } from "../index";
+import { io } from "../index.js";
 import axios from "axios";
-import { config } from "../constants/config";
+import { config } from "../constants/config.js";
 
 // Helper function to calculate distance using Google Distance Matrix API
 async function calculateDistance(

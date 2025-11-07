@@ -1,11 +1,11 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { db } from "../db/connection";
-import { notificationsTable } from "../db/schema";
-import { AppError } from "../middleware/error.middleware";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { db } from "../db/connection.js";
+import { notificationsTable } from "../db/schema.js";
+import { AppError } from "../middleware/error.middleware.js";
 import { eq, and, desc } from "drizzle-orm";
 import { formatDistanceToNow } from "date-fns";
-import { sendPushNotification } from "../services/pushNotification.service";
+import { sendPushNotification } from "../services/pushNotification.service.js";
 
 // ============================================================================
 // NOTIFICATION CREATION HELPERS

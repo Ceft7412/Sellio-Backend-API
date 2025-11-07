@@ -1,5 +1,5 @@
 import axios from "axios";
-import { config } from "../constants/config";
+import { config } from "../constants/config.js";
 
 /**
  * @description Send a text message to the specific phone number.

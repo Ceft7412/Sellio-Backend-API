@@ -1,14 +1,14 @@
 import { Response } from "express";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middleware/error.middleware.js";
 import {
   reportsTable,
   usersTable,
   transactions,
   conversationsTable,
   productsTable,
-} from "../db/schema";
-import { db } from "../db/connection";
-import { AuthRequest } from "../middleware/auth.middleware";
+} from "../db/schema.js";
+import { db } from "../db/connection.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import { eq, and, sql } from "drizzle-orm";
 
 // Submit a report against another user

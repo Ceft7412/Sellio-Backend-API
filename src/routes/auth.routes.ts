@@ -4,8 +4,8 @@ import {
   login,
   getProfile,
   googleAuth,
-} from "../controllers/auth.controller";
-import { authenticateToken } from "../middleware/auth.middleware";
+} from "../controllers/auth.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Storage } from "@google-cloud/storage";
-import { config } from "../constants/config";
+import { config } from "../constants/config.js";
 import path from "path";
 
 // Initialize Google Cloud Storage

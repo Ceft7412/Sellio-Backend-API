@@ -10,9 +10,9 @@ import {
   getUserFavorites,
   trackProductView,
   getSellerAnalytics,
-} from "../controllers/product.controller";
-import { authenticateToken, optionalAuth } from "../middleware/auth.middleware";
-import { uploadMultiple } from "../middleware/upload.middleware";
+} from "../controllers/product.controller.js";
+import { authenticateToken, optionalAuth } from "../middleware/auth.middleware.js";
+import { uploadMultiple } from "../middleware/upload.middleware.js";
 
 const router = Router();
 

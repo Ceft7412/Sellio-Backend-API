@@ -1,7 +1,7 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { AppError } from "../middleware/error.middleware";
-import { db } from "../db/connection";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../middleware/error.middleware.js";
+import { db } from "../db/connection.js";
 import {
   buysTable,
   productsTable,
@@ -9,10 +9,10 @@ import {
   conversationsTable,
   messagesTable,
   usersTable,
-} from "../db/schema";
+} from "../db/schema.js";
 import { eq } from "drizzle-orm";
-import { io } from "../index";
-import { notifyBuyRequest } from "./notification.controller";
+import { io } from "../index.js";
+import { notifyBuyRequest } from "./notification.controller.js";
 
 /**
  * Confirm a buy request (seller only)

@@ -1,6 +1,6 @@
-import { expireTransactionsJob } from "./expireTransactions.job";
-import { expireLocationSharingJob } from "./expireLocationSharing.job";
-import { expireBidsJob } from "./expireBids.job";
+import { expireTransactionsJob } from "./expireTransactions.job.js";
+import { expireLocationSharingJob } from "./expireLocationSharing.job.js";
+import { expireBidsJob } from "./expireBids.job.js";
 
 /**
  * Initialize and start all cron jobs

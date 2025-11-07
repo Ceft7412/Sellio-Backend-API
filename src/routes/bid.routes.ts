@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { getProductBids, placeBid } from "../controllers/bid.controller";
-import { authenticateToken } from "../middleware/auth.middleware";
+import { getProductBids, placeBid } from "../controllers/bid.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

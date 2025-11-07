@@ -1,6 +1,6 @@
 import { request, Request, response, Response } from "express";
-import { categoryAttributesTable } from "../db/schema";
-import { db } from "../db/connection";
+import { categoryAttributesTable } from "../db/schema.js";
+import { db } from "../db/connection.js";
 import { and } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 

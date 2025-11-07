@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { AppError } from "../middleware/error.middleware";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { db } from "../db/connection";
-import { usersTable, reviews } from "../db/schema";
+import { AppError } from "../middleware/error.middleware.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { db } from "../db/connection.js";
+import { usersTable, reviews } from "../db/schema.js";
 import { eq, and, avg, count, sql } from "drizzle-orm";
 
 export const verifyIdentity = async (req: AuthRequest, res: Response) => {

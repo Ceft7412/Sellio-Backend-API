@@ -8,8 +8,8 @@ import {
   getMySales,
   checkReviewExists,
   createReview,
-} from "../controllers/transaction.controller";
-import { authenticateToken } from "../middleware/auth.middleware";
+} from "../controllers/transaction.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 import multer from "multer";
 
 const router = Router();
