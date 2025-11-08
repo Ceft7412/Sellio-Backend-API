@@ -10,7 +10,7 @@ import {
 } from "../db/schema.js";
 import { db } from "../db/connection.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
-import { desc, eq, inArray, or } from "drizzle-orm";
+import { desc, eq, inArray, ne, or } from "drizzle-orm";
 
 import { messagesTable } from "../db/schema.js";
 import { and } from "drizzle-orm";
