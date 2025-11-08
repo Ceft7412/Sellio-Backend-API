@@ -1011,7 +1011,8 @@ export const getConversations = async (req: AuthRequest, res: Response) => {
         .where(
           and(
             inArray(messagesTable.conversationId, conversationIds),
-            eq(messagesTable.isRead, false)
+            eq(messagesTable.isRead, false),
+            ne(messagesTable.senderId, userId) // Exclude messages sent by current user
           )
         );
 
