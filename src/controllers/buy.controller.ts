@@ -88,15 +88,6 @@ export const confirmBuy = async (req: AuthRequest, res: Response) => {
     })
     .returning();
 
-  // Update product status to in_transaction
-  await db
-    .update(productsTable)
-    .set({
-      status: "in_transaction",
-      updatedAt: new Date(),
-    })
-    .where(eq(productsTable.id, buy.productId));
-
   // Find the conversation with this buy and update with transactionId
   const [conversation] = await db
     .select()
@@ -114,7 +105,9 @@ export const confirmBuy = async (req: AuthRequest, res: Response) => {
       .where(eq(conversationsTable.id, conversation.id));
 
     // Create automatic message
-    const messageContent = `Purchase confirmed! The buy now price of ₱${parseFloat(buy.purchasePrice).toLocaleString()} has been accepted. Please schedule a meetup to complete the transaction.`;
+    const messageContent = `Purchase confirmed! The buy now price of ₱${parseFloat(
+      buy.purchasePrice
+    ).toLocaleString()} has been accepted. Please schedule a meetup to complete the transaction.`;
 
     const [newMessage] = await db
       .insert(messagesTable)
