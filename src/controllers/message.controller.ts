@@ -10,7 +10,7 @@ import {
 } from "../db/schema";
 import { db } from "../db/connection";
 import { AuthRequest } from "../middleware/auth.middleware";
-import { desc, eq, inArray, or } from "drizzle-orm";
+import { desc, eq, inArray, or, ne } from "drizzle-orm";
 
 import { messagesTable } from "../db/schema";
 import { and } from "drizzle-orm";
@@ -1011,7 +1011,8 @@ export const getConversations = async (req: AuthRequest, res: Response) => {
         .where(
           and(
             inArray(messagesTable.conversationId, conversationIds),
-            eq(messagesTable.isRead, false)
+            eq(messagesTable.isRead, false),
+            ne(messagesTable.senderId, userId) // Exclude messages sent by current user
           )
         );
 

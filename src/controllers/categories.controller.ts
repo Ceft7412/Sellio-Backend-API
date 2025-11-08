@@ -1,7 +1,7 @@
 import { request, Request, response, Response } from "express";
 import { db } from "../db/connection";
 import { categoriesTable, productsTable } from "../db/schema";
-import { count, eq, isNull } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { AppError } from "../middleware/error.middleware";
 
 // Get all categories
@@ -27,29 +27,52 @@ export const getAllCategoriesWithTotalProducts = async (
   res: Response
 ) => {
   try {
-    const categoriesWithCounts = await db
+    // First, get all categories
+    const allCategories = await db.select().from(categoriesTable);
+
+    // Get all products with their category and subcategory
+    const allProducts = await db
       .select({
-        id: categoriesTable.id,
-        name: categoriesTable.name,
-        description: categoriesTable.description,
-        image_url: categoriesTable.image_url,
-        parentId: categoriesTable.parentId,
-        // Count products based on sub_category_id
-        totalProducts: count(productsTable.id),
+        id: productsTable.id,
+        category_id: productsTable.category_id,
+        sub_category_id: productsTable.sub_category_id,
       })
-      .from(categoriesTable)
-      // LEFT JOIN on sub_category_id to count products for all categories
-      .leftJoin(
-        productsTable,
-        eq(categoriesTable.id, productsTable.sub_category_id)
-      )
-      .groupBy(
-        categoriesTable.id,
-        categoriesTable.name,
-        categoriesTable.description,
-        categoriesTable.image_url,
-        categoriesTable.parentId
-      );
+      .from(productsTable);
+
+    // Count products for each category
+    const categoriesWithCounts = allCategories.map((category) => {
+      let totalProducts = 0;
+
+      if (category.parentId === null) {
+        // This is a parent category
+        // Count products where category_id matches OR sub_category_id of any subcategory matches
+        const subcategoryIds = allCategories
+          .filter((cat) => cat.parentId === category.id)
+          .map((cat) => cat.id);
+
+        totalProducts = allProducts.filter(
+          (product) =>
+            product.category_id === category.id ||
+            (product.sub_category_id &&
+              subcategoryIds.includes(product.sub_category_id))
+        ).length;
+      } else {
+        // This is a subcategory
+        // Count products where sub_category_id matches
+        totalProducts = allProducts.filter(
+          (product) => product.sub_category_id === category.id
+        ).length;
+      }
+
+      return {
+        id: category.id,
+        name: category.name,
+        description: category.description,
+        image_url: category.image_url,
+        parentId: category.parentId,
+        totalProducts,
+      };
+    });
 
     res.json({
       message: "Categories with total products fetched successfully",

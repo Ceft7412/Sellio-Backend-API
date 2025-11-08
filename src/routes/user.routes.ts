@@ -5,7 +5,7 @@ import { verifyIdentity, getUserProfile, updateProfile } from "../controllers/us
 const router = Router();
 
 router.put("/verify-identity", authenticateToken, verifyIdentity);
-router.get("/:userId/profile", authenticateToken, getUserProfile);
+router.get("/:userId/profile", getUserProfile);
 router.put("/profile", authenticateToken, updateProfile);
 
 export default router;

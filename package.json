@@ -12,10 +12,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-<<<<<<< Updated upstream
-=======
     "db:deploy": "drizzle-kit generate && drizzle-kit migrate && npm run db:seed",
->>>>>>> Stashed changes
     "db:seed": "tsx src/db/seed.ts"
   },
   "keywords": [],

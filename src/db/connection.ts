@@ -5,14 +5,8 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 const pool = new Pool({
-<<<<<<< Updated upstream
-  connectionString:
-    process.env.DATABASE_URL ||
-    "postgres://postgres:123456@localhost:5432/sellio",
-=======
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
->>>>>>> Stashed changes
 });
 
 export const db = drizzle(pool);
