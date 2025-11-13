@@ -1,3 +1,5 @@
 .env
 sellio-471714-66dbf15b6b2b.json
 GOOGLE_OAUTH_SETUP.md
+
+/node_modules
