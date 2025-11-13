@@ -8,10 +8,7 @@ import { eq, and } from "drizzle-orm";
 /**
  * Register or update a device token for push notifications
  */
-export const registerDeviceToken = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const registerDeviceToken = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { expoPushToken, deviceName, deviceType } = req.body;
@@ -118,10 +115,7 @@ export const unregisterDeviceToken = async (
 /**
  * Get all device tokens for a user (for admin purposes)
  */
-export const getUserDeviceTokens = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const getUserDeviceTokens = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
 

@@ -1,6 +1,11 @@
 import { Response } from "express";
 import { AppError } from "../middleware/error.middleware.js";
-import { bidsTable, productsTable, usersTable, productImagesTable } from "../db/schema.js";
+import {
+  bidsTable,
+  productsTable,
+  usersTable,
+  productImagesTable,
+} from "../db/schema.js";
 import { db } from "../db/connection.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { eq, desc, and } from "drizzle-orm";
@@ -185,10 +190,12 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       const [productImage] = await db
         .select()
         .from(productImagesTable)
-        .where(and(
-          eq(productImagesTable.productId, productId),
-          eq(productImagesTable.isPrimary, true)
-        ))
+        .where(
+          and(
+            eq(productImagesTable.productId, productId),
+            eq(productImagesTable.isPrimary, true)
+          )
+        )
         .limit(1);
 
       // Notify previous bidder they've been outbid
@@ -199,7 +206,9 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
           productTitle: product.title,
           productImage: productImage?.imageUrl || "",
           newBidAmount: bidAmount.toString(),
-        }).catch((err) => console.error("Failed to send outbid notification:", err));
+        }).catch((err) =>
+          console.error("Failed to send outbid notification:", err)
+        );
       }
     } else {
       // No previous bids - validate against starting price + minimum increment
@@ -249,7 +258,9 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
         productId: productId,
         productTitle: product.title,
         bidAmount: bidAmount.toString(),
-      }).catch((err) => console.error("Failed to send new bid notification:", err));
+      }).catch((err) =>
+        console.error("Failed to send new bid notification:", err)
+      );
     }
 
     res.status(201).json({

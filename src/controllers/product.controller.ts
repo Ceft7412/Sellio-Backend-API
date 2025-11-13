@@ -234,8 +234,10 @@ export const getProductById = async (req: Request, res: Response) => {
       .orderBy(desc(productImagesTable.isPrimary));
 
     // Separate product images and maintenance images
-    const images = allImages.filter(img => img.imageType === 'product');
-    const maintenanceImages = allImages.filter(img => img.imageType === 'maintenance');
+    const images = allImages.filter((img) => img.imageType === "product");
+    const maintenanceImages = allImages.filter(
+      (img) => img.imageType === "maintenance"
+    );
 
     // Fetch category if exists
     let category = null;
@@ -440,70 +442,84 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
 
     // Step 3: Upload images to GCS asynchronously (don't await)
     // Process product images
-    const productImageUploadPromises = productImages.map(async (file, index) => {
-      try {
-        // Generate unique filename
-        const uniqueFileName = generateUniqueFileName(file.originalname);
+    const productImageUploadPromises = productImages.map(
+      async (file, index) => {
+        try {
+          // Generate unique filename
+          const uniqueFileName = generateUniqueFileName(file.originalname);
 
-        // Upload to GCS
-        const imageUrl = await uploadToGCS(
-          file.buffer,
-          uniqueFileName,
-          file.mimetype,
-          "product_images"
-        );
+          // Upload to GCS
+          const imageUrl = await uploadToGCS(
+            file.buffer,
+            uniqueFileName,
+            file.mimetype,
+            "product_images"
+          );
 
-        // Determine if this is the primary image (first image)
-        const isPrimary = index === 0;
+          // Determine if this is the primary image (first image)
+          const isPrimary = index === 0;
 
-        // Save image record to database with imageType: 'product'
-        await db.insert(productImagesTable).values({
-          productId: newProduct.id,
-          imageUrl,
-          imageType: 'product',
-          order: index.toString(),
-          isPrimary,
-        });
+          // Save image record to database with imageType: 'product'
+          await db.insert(productImagesTable).values({
+            productId: newProduct.id,
+            imageUrl,
+            imageType: "product",
+            order: index.toString(),
+            isPrimary,
+          });
 
-        console.log(`Product image ${index + 1} uploaded successfully: ${imageUrl}`);
-      } catch (error) {
-        console.error(`Error uploading product image ${index + 1}:`, error);
-        // Don't throw error - just log it, so other images can continue uploading
+          console.log(
+            `Product image ${index + 1} uploaded successfully: ${imageUrl}`
+          );
+        } catch (error) {
+          console.error(`Error uploading product image ${index + 1}:`, error);
+          // Don't throw error - just log it, so other images can continue uploading
+        }
       }
-    });
+    );
 
     // Process maintenance checklist images
-    const maintenanceImageUploadPromises = maintenanceImages.map(async (file, index) => {
-      try {
-        // Generate unique filename
-        const uniqueFileName = generateUniqueFileName(file.originalname);
+    const maintenanceImageUploadPromises = maintenanceImages.map(
+      async (file, index) => {
+        try {
+          // Generate unique filename
+          const uniqueFileName = generateUniqueFileName(file.originalname);
 
-        // Upload to GCS
-        const imageUrl = await uploadToGCS(
-          file.buffer,
-          uniqueFileName,
-          file.mimetype,
-          "product_images"
-        );
+          // Upload to GCS
+          const imageUrl = await uploadToGCS(
+            file.buffer,
+            uniqueFileName,
+            file.mimetype,
+            "product_images"
+          );
 
-        // Save image record to database with imageType: 'maintenance'
-        await db.insert(productImagesTable).values({
-          productId: newProduct.id,
-          imageUrl,
-          imageType: 'maintenance',
-          order: index.toString(),
-          isPrimary: false, // Maintenance images are never primary
-        });
+          // Save image record to database with imageType: 'maintenance'
+          await db.insert(productImagesTable).values({
+            productId: newProduct.id,
+            imageUrl,
+            imageType: "maintenance",
+            order: index.toString(),
+            isPrimary: false, // Maintenance images are never primary
+          });
 
-        console.log(`Maintenance image ${index + 1} uploaded successfully: ${imageUrl}`);
-      } catch (error) {
-        console.error(`Error uploading maintenance image ${index + 1}:`, error);
-        // Don't throw error - just log it, so other images can continue uploading
+          console.log(
+            `Maintenance image ${index + 1} uploaded successfully: ${imageUrl}`
+          );
+        } catch (error) {
+          console.error(
+            `Error uploading maintenance image ${index + 1}:`,
+            error
+          );
+          // Don't throw error - just log it, so other images can continue uploading
+        }
       }
-    });
+    );
 
     // Start uploading all images in background (don't await)
-    Promise.all([...productImageUploadPromises, ...maintenanceImageUploadPromises]).catch((error) => {
+    Promise.all([
+      ...productImageUploadPromises,
+      ...maintenanceImageUploadPromises,
+    ]).catch((error) => {
       console.error("Error in image upload process:", error);
     });
 
@@ -672,20 +688,24 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
     // Fetch favorites with product details
     const favorites = await db
       .select({
-        id: productFavoritesTable.id,
-        createdAt: productFavoritesTable.createdAt,
+        favoriteId: productFavoritesTable.id,
+        favoriteCreatedAt: productFavoritesTable.createdAt,
+
+        // Product fields
         productId: productsTable.id,
-        productTitle: productsTable.title,
-        productDescription: productsTable.description,
-        productPrice: productsTable.price,
-        productOriginalPrice: productsTable.originalPrice,
-        productCondition: productsTable.condition,
-        productSaleType: productsTable.saleType,
-        productLocation: productsTable.location,
-        productCategoryId: productsTable.category_id,
-        productSubCategoryId: productsTable.sub_category_id,
-        productStatus: productsTable.status,
+        title: productsTable.title,
+        description: productsTable.description,
+        price: productsTable.price,
+        originalPrice: productsTable.originalPrice,
+        condition: productsTable.condition,
+        saleType: productsTable.saleType,
+        location: productsTable.location,
+        category_id: productsTable.category_id,
+        sub_category_id: productsTable.sub_category_id,
+        status: productsTable.status,
         productCreatedAt: productsTable.createdAt,
+
+        // Seller fields
         sellerId: usersTable.id,
         sellerDisplayName: usersTable.displayName,
         sellerAvatarUrl: usersTable.avatarUrl,
@@ -702,23 +722,23 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
 
     // Fetch images and categories for each product
     const favoritesWithDetails = await Promise.all(
-      favorites.map(async (favorite) => {
-        if (!favorite.productId) return null;
+      favorites.map(async (favorite: any) => {
+        if (!favorite) return null;
 
         // Fetch images
         const images = await db
           .select()
           .from(productImagesTable)
-          .where(eq(productImagesTable.productId, favorite.productId))
+          .where(eq(productImagesTable.productId, favorite.productId ?? ""))
           .orderBy(desc(productImagesTable.isPrimary));
 
         // Fetch category if exists
         let category = null;
-        if (favorite.productCategoryId) {
+        if (favorite.category_id) {
           const [cat] = await db
             .select()
             .from(categoriesTable)
-            .where(eq(categoriesTable.id, favorite.productCategoryId))
+            .where(eq(categoriesTable.id, favorite.category_id))
             .limit(1);
           category = cat
             ? { id: cat.id, name: cat.name, image_url: cat.image_url }
@@ -727,11 +747,11 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
 
         // Fetch subcategory if exists
         let subCategory = null;
-        if (favorite.productSubCategoryId) {
+        if (favorite.sub_category_id) {
           const [subCat] = await db
             .select()
             .from(categoriesTable)
-            .where(eq(categoriesTable.id, favorite.productSubCategoryId))
+            .where(eq(categoriesTable.id, favorite.sub_category_id))
             .limit(1);
           subCategory = subCat
             ? { id: subCat.id, name: subCat.name, image_url: subCat.image_url }
@@ -739,30 +759,13 @@ export const getUserFavorites = async (req: AuthRequest, res: Response) => {
         }
 
         return {
-          id: favorite.id,
-          createdAt: favorite.createdAt,
+          id: favorite.productId,
+          createdAt: favorite.favoriteCreatedAt,
           product: {
-            id: favorite.productId,
-            title: favorite.productTitle,
-            description: favorite.productDescription,
-            price: favorite.productPrice,
-            originalPrice: favorite.productOriginalPrice,
-            condition: favorite.productCondition,
-            saleType: favorite.productSaleType,
-            location: favorite.productLocation,
-            category_id: favorite.productCategoryId,
-            sub_category_id: favorite.productSubCategoryId,
-            status: favorite.productStatus,
-            createdAt: favorite.productCreatedAt,
-            seller: {
-              id: favorite.sellerId,
-              displayName: favorite.sellerDisplayName,
-              avatarUrl: favorite.sellerAvatarUrl,
-              verified: favorite.sellerVerified,
-            },
+            ...favorite,
             category,
             subCategory,
-            images: images.map((img) => ({
+            images: images.map((img: any) => ({
               id: img.id,
               url: img.imageUrl,
               isPrimary: img.isPrimary,

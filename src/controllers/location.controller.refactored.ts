@@ -123,10 +123,7 @@ async function getAndVerifyConversation(
     conversation.participant1Id !== userId &&
     conversation.participant2Id !== userId
   ) {
-    throw new AppError(
-      "Not authorized to access this conversation",
-      403
-    );
+    throw new AppError("Not authorized to access this conversation", 403);
   }
 
   return conversation;
@@ -511,7 +508,8 @@ export const handleLocationUpdate = async (
 
       // Calculate distance if meetup coordinates are available
       if (transaction?.meetupCoordinates) {
-        const meetupCoords = transaction.meetupCoordinates as LocationCoordinates;
+        const meetupCoords =
+          transaction.meetupCoordinates as LocationCoordinates;
         const cacheKey = `${session.id}:${userId}`;
 
         distanceInfo = await calculateDistance(
