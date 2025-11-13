@@ -813,7 +813,7 @@ export const getMyPurchases = async (req: AuthRequest, res: Response) => {
           id: row.users.id,
           displayName: row.users.displayName,
           avatarUrl: row.users.avatarUrl,
-          verified: row.users.identityVerified,
+          verified: row.users.identityVerifiedAt,
         },
         completionData: completionData,
       };
@@ -899,7 +899,7 @@ export const getMySales = async (req: AuthRequest, res: Response) => {
           id: row.users.id,
           displayName: row.users.displayName,
           avatarUrl: row.users.avatarUrl,
-          verified: row.users.identityVerified,
+          verified: row.users.identityVerifiedAt,
         },
         completionData: completionData,
       };

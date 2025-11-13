@@ -64,10 +64,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       })
       .from(reviews)
       .where(
-        and(
-          eq(reviews.revieweeId, userId),
-          eq(reviews.revieweeRole, "seller")
-        )
+        and(eq(reviews.revieweeId, userId), eq(reviews.revieweeRole, "seller"))
       );
 
     // Get buyer ratings (when user is reviewee as buyer)
@@ -78,10 +75,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       })
       .from(reviews)
       .where(
-        and(
-          eq(reviews.revieweeId, userId),
-          eq(reviews.revieweeRole, "buyer")
-        )
+        and(eq(reviews.revieweeId, userId), eq(reviews.revieweeRole, "buyer"))
       );
 
     // Get recent reviews as seller (limit to 10 most recent)
@@ -100,10 +94,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       .from(reviews)
       .leftJoin(usersTable, eq(reviews.reviewerId, usersTable.id))
       .where(
-        and(
-          eq(reviews.revieweeId, userId),
-          eq(reviews.revieweeRole, "seller")
-        )
+        and(eq(reviews.revieweeId, userId), eq(reviews.revieweeRole, "seller"))
       )
       .orderBy(sql`${reviews.createdAt} DESC`)
       .limit(10);
@@ -124,10 +115,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
       .from(reviews)
       .leftJoin(usersTable, eq(reviews.reviewerId, usersTable.id))
       .where(
-        and(
-          eq(reviews.revieweeId, userId),
-          eq(reviews.revieweeRole, "buyer")
-        )
+        and(eq(reviews.revieweeId, userId), eq(reviews.revieweeRole, "buyer"))
       )
       .orderBy(sql`${reviews.createdAt} DESC`)
       .limit(10);
@@ -190,15 +178,16 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
         throw new AppError("Display name is required", 400);
       }
       if (displayName.trim().length < 3) {
-        throw new AppError(
-          "Display name must be at least 3 characters",
-          400
-        );
+        throw new AppError("Display name must be at least 3 characters", 400);
       }
     }
 
     // Validate Philippines phone number format (639XXXXXXXXX)
-    if (phoneNumber !== undefined && phoneNumber !== null && phoneNumber !== "") {
+    if (
+      phoneNumber !== undefined &&
+      phoneNumber !== null &&
+      phoneNumber !== ""
+    ) {
       const phoneRegex = /^639\d{9}$/;
       if (!phoneRegex.test(phoneNumber)) {
         throw new AppError(
@@ -223,7 +212,10 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       updateData.businessDocuments = businessDocuments;
 
     // Update user profile
-    await db.update(usersTable).set(updateData).where(eq(usersTable.id, userId));
+    await db
+      .update(usersTable)
+      .set(updateData)
+      .where(eq(usersTable.id, userId));
 
     // Fetch updated user data
     const [updatedUser] = await db

@@ -28,11 +28,9 @@ export const submitReport = async (req: AuthRequest, res: Response) => {
     if (!reportedUserId)
       throw new AppError("Reported user ID is required", 400);
     if (!productId) throw new AppError("Product ID is required", 400);
-    if (!transactionId)
-      throw new AppError("Transaction ID is required", 400);
+    if (!transactionId) throw new AppError("Transaction ID is required", 400);
     if (!reportType) throw new AppError("Report type is required", 400);
-    if (!conversationId)
-      throw new AppError("Conversation ID is required", 400);
+    if (!conversationId) throw new AppError("Conversation ID is required", 400);
 
     // Validate that user cannot report themselves
     if (userId === reportedUserId) {
@@ -175,7 +173,9 @@ export const submitReport = async (req: AuthRequest, res: Response) => {
           .where(eq(usersTable.id, reportedUserId));
 
         console.log(
-          `User ${reportedUserId} suspended until ${suspensionExpiry.toISOString()} due to 4 reports of type: ${reportCount.reportType}`
+          `User ${reportedUserId} suspended until ${suspensionExpiry.toISOString()} due to 4 reports of type: ${
+            reportCount.reportType
+          }`
         );
         break;
       }

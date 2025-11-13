@@ -14,8 +14,14 @@ export const getAllCategories = async (req: Request, res: Response) => {
   });
 };
 
-export const getAllCategoriesWithoutParent = async (req: Request, res: Response) => {
-  const categories = await db.select().from(categoriesTable).where(isNull(categoriesTable.parentId));
+export const getAllCategoriesWithoutParent = async (
+  req: Request,
+  res: Response
+) => {
+  const categories = await db
+    .select()
+    .from(categoriesTable)
+    .where(isNull(categoriesTable.parentId));
   res.json({
     message: "Categories fetched successfully",
     categories,

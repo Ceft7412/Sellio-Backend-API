@@ -114,7 +114,9 @@ export const confirmBuy = async (req: AuthRequest, res: Response) => {
       .where(eq(conversationsTable.id, conversation.id));
 
     // Create automatic message
-    const messageContent = `Purchase confirmed! The buy now price of ₱${parseFloat(buy.purchasePrice).toLocaleString()} has been accepted. Please schedule a meetup to complete the transaction.`;
+    const messageContent = `Purchase confirmed! The buy now price of ₱${parseFloat(
+      buy.purchasePrice
+    ).toLocaleString()} has been accepted. Please schedule a meetup to complete the transaction.`;
 
     const [newMessage] = await db
       .insert(messagesTable)

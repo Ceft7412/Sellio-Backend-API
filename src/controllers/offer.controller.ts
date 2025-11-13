@@ -1,11 +1,23 @@
 import { Request, Response } from "express";
 import { db } from "../db/connection";
-import { offersTable, productsTable, messagesTable, conversationsTable, transactions, usersTable, productImagesTable } from "../db/schema";
+import {
+  offersTable,
+  productsTable,
+  messagesTable,
+  conversationsTable,
+  transactions,
+  usersTable,
+  productImagesTable,
+} from "../db/schema";
 import { eq, and, or } from "drizzle-orm";
 import { AppError } from "../middleware/error.middleware";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { io } from "../index";
-import { notifyNewOffer, notifyOfferAccepted, notifyOfferRejected } from "./notification.controller";
+import {
+  notifyNewOffer,
+  notifyOfferAccepted,
+  notifyOfferRejected,
+} from "./notification.controller";
 
 // Create an offer
 export const createOffer = async (req: AuthRequest, res: Response) => {
@@ -73,7 +85,9 @@ export const createOffer = async (req: AuthRequest, res: Response) => {
       productId: productId,
       productTitle: product.title,
       offerAmount: offerAmount,
-    }).catch((err) => console.error("Failed to send new offer notification:", err));
+    }).catch((err) =>
+      console.error("Failed to send new offer notification:", err)
+    );
   }
 
   res.status(201).json({
@@ -255,10 +269,12 @@ export const acceptOffer = async (req: AuthRequest, res: Response) => {
   const [productImage] = await db
     .select()
     .from(productImagesTable)
-    .where(and(
-      eq(productImagesTable.productId, offer.productId),
-      eq(productImagesTable.isPrimary, true)
-    ))
+    .where(
+      and(
+        eq(productImagesTable.productId, offer.productId),
+        eq(productImagesTable.isPrimary, true)
+      )
+    )
     .limit(1);
 
   // Notify buyer that offer was accepted
@@ -268,7 +284,9 @@ export const acceptOffer = async (req: AuthRequest, res: Response) => {
     productTitle: product.title,
     productImage: productImage?.imageUrl || "",
     offerAmount: offer.offerAmount,
-  }).catch((err) => console.error("Failed to send offer accepted notification:", err));
+  }).catch((err) =>
+    console.error("Failed to send offer accepted notification:", err)
+  );
 
   res.json({
     message: "Offer accepted successfully",
@@ -363,10 +381,12 @@ export const rejectOffer = async (req: AuthRequest, res: Response) => {
   const [productImage] = await db
     .select()
     .from(productImagesTable)
-    .where(and(
-      eq(productImagesTable.productId, offer.productId),
-      eq(productImagesTable.isPrimary, true)
-    ))
+    .where(
+      and(
+        eq(productImagesTable.productId, offer.productId),
+        eq(productImagesTable.isPrimary, true)
+      )
+    )
     .limit(1);
 
   // Notify buyer that offer was rejected
@@ -377,7 +397,9 @@ export const rejectOffer = async (req: AuthRequest, res: Response) => {
       productTitle: product.title,
       productImage: productImage?.imageUrl || "",
       offerAmount: offer.offerAmount,
-    }).catch((err) => console.error("Failed to send offer rejected notification:", err));
+    }).catch((err) =>
+      console.error("Failed to send offer rejected notification:", err)
+    );
   }
 
   res.json({
